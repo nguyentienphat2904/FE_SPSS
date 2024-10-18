@@ -10,8 +10,6 @@ const AppFooter = () => {
         <div className="layout-footer">
             <img src={`/layout/images/hcmut.png`} alt="Logo" height="20" className="mr-2" />
             <span className="font-medium mr-2">Smart Printing Service</span>
-            with
-            <span className="font-medium ml-2">PrimeReact</span>
         </div>
     );
 };

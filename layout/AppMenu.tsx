@@ -13,13 +13,13 @@ const AppMenu = () => {
     const model: AppMenuItem[] = [
         {
             label: 'Trang chủ',
-            items: [{ label: 'Nhà của tôi', icon: 'pi pi-fw pi-home', to: '/' }]
+            items: [{ label: 'Nhà của tôi', icon: 'pi pi-fw pi-home', to: '/home' }]
         },
         {
             label: 'Dịch vụ',
             items: [
-                { label: 'Đăng ký in', icon: 'pi pi-fw pi-print', to: '/printRegister' },
-                { label: 'Mua giấy in', icon: 'pi pi-fw pi-shopping-cart', to: '/buyPage' },
+                { label: 'Đăng ký in', icon: 'pi pi-fw pi-print', to: '/print' },
+                { label: 'Mua giấy in', icon: 'pi pi-fw pi-shopping-cart', to: '/purchase' },
                 { label: 'Phản hồi', icon: 'pi pi-fw pi-bookmark', to: '/response' },
             ]
         }

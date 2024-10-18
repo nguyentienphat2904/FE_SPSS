@@ -21,8 +21,13 @@ const AppTopbar = forwardRef<AppTopbarRef>((props, ref) => {
     return (
         <div className="layout-topbar">
             <Link href="/" className="layout-topbar-logo">
-                <img src={`/layout/images/hcmut.png`} width="35px" height={'35px'} alt="logo" />
-                <span>Smart Printing Service</span>
+                <div className='flex align-items-center justify-content-center font-semibold gap-2'>
+                    <img src={`/layout/images/hcmut.png`} width="38px" height={'35px'} alt="logo" className='hidden md:block' />
+                    <div className='flex flex-column align-items-center md:align-items-left justify-content-center font-semibold'>
+                        <span className='text-lg layout-topbar-maintext w-full text-center md:text-left'>Smart</span>
+                        <span className='text-lg layout-topbar-secondarytext'>Printing Service</span>
+                    </div>
+                </div>
             </Link>
 
             <button ref={menubuttonRef} type="button" className="p-link layout-menu-button layout-topbar-button" onClick={onMenuToggle}>
