@@ -4,7 +4,7 @@ const HomePage = () => {
 
     return (
         <div>
-            DASBOARD
+            DASHBOARD
         </div>
     );
 };
