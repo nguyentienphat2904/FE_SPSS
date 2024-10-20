@@ -1,0 +1,47 @@
+.print-main-content {
+    background: var(--surface-card);
+    padding: 2rem;
+    margin-bottom: 2rem;
+
+    .p-card-title {
+        color: var(--primary-color);
+    }
+}
+
+.print-content {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+
+    @media (max-width: 1024px) {
+        grid-template-columns: 1fr,
+    }
+}
+
+.print-checkbox-group {
+    display: flex;
+    align-items: center;
+}
+
+.print-label-second {
+    margin-left: calc(1rem + 15px);
+    margin-top: 0.5rem;
+}
+
+.print-config-box {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-bottom: 16px;
+
+    @media (max-width: 1279px) {
+        grid-template-columns: 1fr,
+    }
+}
+
+.print-footer {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    justify-content: end;
+}
