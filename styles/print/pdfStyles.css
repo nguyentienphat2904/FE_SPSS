@@ -1,0 +1,16 @@
+/* pdfStyles.css */
+.ReactPDF__TextLayer {
+    position: absolute;
+    font-size: 12px;
+    line-height: 1.2;
+    white-space: pre;
+    overflow: hidden;
+    direction: inherit;
+    color: rgba(0, 0, 0, 0.87);
+}
+
+.ReactPDF__AnnotationLayer {
+    position: absolute;
+    pointer-events: none;
+    /* Đảm bảo layer chú thích không chặn các sự kiện chuột */
+}

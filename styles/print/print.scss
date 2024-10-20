@@ -13,7 +13,7 @@
     grid-template-columns: repeat(2, 1fr);
     gap: 16px;
 
-    @media (max-width: 1024px) {
+    @media (max-width: 1536px) {
         grid-template-columns: 1fr,
     }
 }
@@ -44,4 +44,41 @@
     flex-direction: row;
     gap: 8px;
     justify-content: end;
+}
+
+.print-dialog {
+    width: 25vw;
+}
+
+.print-confirmation-content {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.print-file-upload-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 50vh;
+}
+
+.print-confirm-data {
+    display: flex;
+    flex-direction: column;
+
+    label {
+        color: black;
+        font-weight: 500;
+        min-width: 100px;
+    }
+
+    span {
+        margin-right: 0;
+    }
+}
+
+.print-confirm-row {
+    display: flex;
+    flex-direction: row;
 }
