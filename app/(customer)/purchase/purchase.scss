@@ -1,0 +1,38 @@
+@media (min-width: 713px) {
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .header-right input {
+        width: 300px;
+    }
+}
+
+// "flex flex-wrap gap-2 justify-content-between align-items-center"
+
+@media (max-width: 713px) {
+    .header-right {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .header-right input {
+        width: 70%;
+    }
+}
+
+@media (max-width: 604px) {
+    .header-right button {
+        padding: 6px;
+        font-size: 14px;
+        height: 45px;
+        width: 25%;
+    }
+}
+
+@media (max-width: 240px) {
+    .header {}
+}
