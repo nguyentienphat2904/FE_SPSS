@@ -13,6 +13,8 @@ import { ProgressBar } from 'primereact/progressbar';
 import { Tag } from 'primereact/tag';
 import { Button } from 'primereact/button';
 
+import PDFViewer from './PDFViewer';
+
 export default function PrintViewFile() {
 
     const toast = useRef<Toast>(null);
@@ -22,7 +24,7 @@ export default function PrintViewFile() {
     const onTemplateSelect = (e: FileUploadSelectEvent) => {
         let files = e.files;
 
-        setTotalSize(files[0].size);
+        setTotalSize(files[0] ? files[0].size : 0);
     }
 
     const onTemplateUpload = (e: FileUploadUploadEvent) => {
@@ -104,6 +106,7 @@ export default function PrintViewFile() {
                 onUpload={onTemplateUpload} onSelect={onTemplateSelect} onError={onTemplateClear} onClear={onTemplateClear}
                 headerTemplate={headerTemplate} itemTemplate={itemTemplate} emptyTemplate={emptyTemplate}
                 chooseOptions={chooseOptions} uploadOptions={uploadOptions} cancelOptions={cancelOptions} />
+            <PDFViewer url={"https://pdfobject.com/pdf/sample.pdf"}></PDFViewer>
         </div>
     )
 }

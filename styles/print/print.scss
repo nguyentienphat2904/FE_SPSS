@@ -58,6 +58,8 @@
 
 .print-file-upload-box {
     min-height: 50vh;
+    display: flex;
+    flex-direction: column;
 }
 
 .print-confirm-data {
