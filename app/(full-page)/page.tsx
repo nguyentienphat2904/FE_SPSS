@@ -51,6 +51,7 @@ const LandingPage = () => {
                             </h1>
                             <img src={`/layout/images/hcmut.png`} width="250px" height={'250px'} alt="logo" className='hidden xl:block xl:-mt-8 ' />
                             <img src={`/layout/images/hcmut.png`} width="150px" height={'150px'} alt="logo" className='xl:hidden' />
+
                         </div>
                     </div>
                 </div>

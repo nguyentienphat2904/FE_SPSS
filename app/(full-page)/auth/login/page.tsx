@@ -54,7 +54,7 @@ const LoginPage = () => {
                                     Quên mật khẩu?
                                 </a>
                             </div>
-                            <Button label="Đăng nhập" className="w-full p-3 text-xl" onClick={() => router.push('/')}></Button>
+                            <Button label="Đăng nhập" className="w-full p-3 text-xl" onClick={() => router.push('/home')}></Button>
                         </div>
                     </div>
                 </div>
