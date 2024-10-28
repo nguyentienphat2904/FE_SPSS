@@ -59,7 +59,9 @@ const LandingPage = () => {
                             </li>
                         </ul>
                         <div className="flex justify-content-between lg:block border-top-1 lg:border-top-none surface-border py-3 lg:py-0 mt-3 lg:mt-0">
-                            <Button label="Login" text rounded className="border-none font-light line-height-2 text-blue-500"></Button>
+                            <Link href="/auth/login">
+                                <Button label="Login" text rounded className="border-none font-light line-height-2 text-blue-500"></Button>
+                            </Link>
                             <Button label="Register" rounded className="border-none ml-5 font-light line-height-2 bg-blue-500 text-white"></Button>
                         </div>
                     </div>
@@ -81,7 +83,7 @@ const LandingPage = () => {
                         <Button type="button" label="Get Started" rounded className="text-xl border-none mt-3 bg-blue-500 font-normal line-height-3 px-3 text-white"></Button>
                     </div>
                     <div className="flex justify-content-center md:justify-content-end">
-                        <img src="/demo/images/landing/screen-1.png" alt="Hero Image" className="w-9 md:w-auto" />
+                        <img src="/app/hcmut.png" alt="HCMUT Image" className="w-9 md:w-auto" />
                     </div>
                 </div>
 

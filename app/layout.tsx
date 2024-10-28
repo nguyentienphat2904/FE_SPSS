@@ -7,6 +7,7 @@ import 'primereact/resources/primereact.css';
 import 'primeflex/primeflex.css';
 import 'primeicons/primeicons.css';
 import '../styles/layout/layout.scss';
+import './global.css';
 
 interface RootLayoutProps {
     children: React.ReactNode;

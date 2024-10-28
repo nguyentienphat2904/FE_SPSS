@@ -17,7 +17,7 @@ export const metadata: Metadata = {
         ttl: 604800
     },
     icons: {
-        icon: '../hcmut.png'
+        icon: `/layout/images/hcmut.png`
     }
 };
 
