@@ -8,7 +8,7 @@ import { InputText } from 'primereact/inputtext';
 import { Calendar } from 'primereact/calendar';
 import { Dialog } from 'primereact/dialog';
 import { InputTextarea } from 'primereact/inputtextarea';
-import './response.scss'
+import './styles/response.scss'
 import { SampleData } from './service/SampleData';
 import { Dropdown, DropdownChangeEvent } from 'primereact/dropdown';
 import { Tag } from 'primereact/tag';

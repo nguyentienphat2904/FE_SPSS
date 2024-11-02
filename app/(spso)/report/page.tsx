@@ -1,9 +1,14 @@
-import React from 'react'
+import React from 'react';
+import './styles/page.scss';
+import { Card } from 'primereact/card';
+import ReportMain from './components/report';
 
-export default function ReportPage() {
+export default function ConfigPage() {
     return (
-        <div>
-            Report Page
-        </div>
+        <Card title="Báo cáo" className='report-main-content' >
+            <div className='report-content'>
+                <ReportMain />
+            </div>
+        </Card>
     )
 }

@@ -1,0 +1,25 @@
+.config-footer {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.main-config-box {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-bottom: 16px;
+
+    @media (max-width: 1279px) {
+        grid-template-columns: 1fr;
+    }
+}
+
+.file-config {
+    grid-column: span 2;
+
+    @media (max-width: 1279px) {
+        grid-column: span 1;
+    }
+}

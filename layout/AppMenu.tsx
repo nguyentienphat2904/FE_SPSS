@@ -29,8 +29,8 @@ const AppMenu = () => {
                 { label: 'Thống kê', icon: 'pi pi-fw pi-chart-bar', to: '/dashboard' },
                 { label: 'Quản lý máy in', icon: 'pi pi-fw pi-print', to: '/printers' },
                 { label: 'Cấu hình', icon: 'pi pi-fw pi-cog', to: '/config' },
-                { label: 'Báo cáo', icon: 'pi pi-fw pi-paperclip', to: '/spso_response' },
-                { label: 'Phản hồi', icon: 'pi pi-fw pi-file-word', to: '/report' },
+                { label: 'Báo cáo', icon: 'pi pi-fw pi-paperclip', to: '/report' },
+                { label: 'Phản hồi', icon: 'pi pi-fw pi-file-word', to: '/spso_response' },
             ]
         }
     ];
