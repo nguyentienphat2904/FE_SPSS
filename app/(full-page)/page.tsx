@@ -12,7 +12,7 @@ const LandingPage = () => {
     return (
         <div className="surface-0 flex justify-content-center">
             <div id="home" className="landing-wrapper overflow-hidden flex flex-column min-h-screen">
-                <div className="py-3 px-4 flex align-items-center relative static w-screen justify-content-between">
+                <div className="py-3 px-4 flex align-items-center relative  w-screen justify-content-between">
                     <Link href="/" className="layout-topbar-logo">
                         <div className='flex align-items-center justify-content-center font-semibold gap-2'>
                             <img src={`/layout/images/hcmut.png`} width="38px" height={'38px'} alt="logo" className='mr-2' />

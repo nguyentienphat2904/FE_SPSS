@@ -1,0 +1,36 @@
+.report-footer {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.main-report-box {
+    grid-column: span 1;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+    margin-bottom: 16px;
+
+    @media (max-width: 1279px) {
+        grid-template-columns: 1fr;
+    }
+}
+
+.file-report {
+    grid-column: span 2;
+
+    @media (max-width: 1279px) {
+        grid-column: span 1;
+    }
+}
+
+.custom-border-box {
+    border: 1px solid #dce0e9;
+    border-radius: 8px;
+    overflow: clip;
+}
+
+.custom-border-box .header {
+    border-bottom: 1px solid #d1d5db;
+}

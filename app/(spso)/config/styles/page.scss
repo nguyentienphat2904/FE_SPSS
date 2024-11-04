@@ -1,0 +1,19 @@
+.config-main-content {
+    background: var(--surface-card);
+    padding: 2rem;
+    margin-bottom: 2rem;
+
+    .p-card-title {
+        color: var(--primary-color);
+    }
+}
+
+.config-content {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+
+    @media (max-width: 1536px) {
+        grid-template-columns: 1fr,
+    }
+}
