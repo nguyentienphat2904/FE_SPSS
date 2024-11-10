@@ -1,28 +1,106 @@
-'use client'
-import React from 'react'
+'use-client'
 
-import { Viewer, Worker } from '@react-pdf-viewer/core';
-import "@react-pdf-viewer/core/lib/styles/index.css";
-import { defaultLayoutPlugin } from '@react-pdf-viewer/default-layout';
-import "@react-pdf-viewer/default-layout/lib/styles/index.css";
+import { useEffect, useRef, useState } from 'react';
+import * as pdfjsLib from 'pdfjs-dist';
+import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist';
 
-interface PDFViewerProps {
-    url: string
+GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.js`;
+
+interface PdfViewerProps {
+    pdfFile: File | null;
 }
 
-const PDFViewer: React.FC<PDFViewerProps> = ({ url }) => {
-    const defaultLayoutPluginInstance = defaultLayoutPlugin();
+const PdfViewer: React.FC<PdfViewerProps> = ({ pdfFile }) => {
+    const [pdf, setPdf] = useState<any>(null);
+    const [pageNumber, setPageNumber] = useState(1);
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+
+    useEffect(() => {
+        const renderPDF = async () => {
+            if (pdfFile) {
+                const arrayBuffer = await pdfFile.arrayBuffer();
+                const loadedPdf = await getDocument({ data: arrayBuffer }).promise;
+                setPdf(loadedPdf);
+                renderPage(1);
+            }
+        };
+
+        const renderPage = async (pageNum: number) => {
+            if (pdf) {
+                const page = await pdf.getPage(pageNum);
+                const viewport = page.getViewport({ scale: 1 });
+                const canvas = canvasRef.current;
+                if (canvas) {
+                    const context = canvas.getContext('2d');
+                    if (context) {
+                        canvas.height = viewport.height;
+                        canvas.width = viewport.width;
+                        const renderContext = {
+                            canvasContext: context,
+                            viewport: viewport,
+                        };
+                        page.render(renderContext);
+                    }
+                }
+            }
+        };
+
+        renderPDF();
+    }, [pdfFile]);
+
+    useEffect(() => {
+        if (pdf) {
+            renderPage(pageNumber);
+        }
+    }, [pageNumber]);
+
+    const renderPage = async (pageNum: number) => {
+        if (pdf) {
+            const page = await pdf.getPage(pageNum);
+            const viewport = page.getViewport({ scale: 1 });
+            const canvas = canvasRef.current;
+            if (canvas) {
+                const context = canvas.getContext('2d');
+                if (context) {
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+                    const renderContext = {
+                        canvasContext: context,
+                        viewport: viewport,
+                    };
+                    page.render(renderContext);
+                }
+            }
+        }
+    };
+
+    const nextPage = () => {
+        if (pdf && pageNumber < pdf.numPages) {
+            setPageNumber(pageNumber + 1);
+        }
+    };
+
+    const prevPage = () => {
+        if (pdf && pageNumber > 1) {
+            setPageNumber(pageNumber - 1);
+        }
+    };
+
+    console.log(canvasRef)
 
     return (
-        <div className="h-screen w-screen">
-            <Worker workerUrl="https://unpkg.com/pdfjs-dist@3.10.111/build/pdf.worker.min.js">
-                <Viewer
-                    fileUrl={url}
-                    plugins={[defaultLayoutPluginInstance]}
-                />
-            </Worker>
+        <div>
+            <canvas ref={canvasRef}></canvas>
+            <div>
+                <button onClick={prevPage} disabled={pageNumber <= 1}>
+                    Previous
+                </button>
+                <button onClick={nextPage} disabled={pdf && pageNumber >= pdf.numPages}>
+                    Next
+                </button>
+            </div>
         </div>
     );
 };
 
-export default PDFViewer;
+export default PdfViewer;

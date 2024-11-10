@@ -106,7 +106,7 @@ export default function PrintViewFile() {
                 onUpload={onTemplateUpload} onSelect={onTemplateSelect} onError={onTemplateClear} onClear={onTemplateClear}
                 headerTemplate={headerTemplate} itemTemplate={itemTemplate} emptyTemplate={emptyTemplate}
                 chooseOptions={chooseOptions} uploadOptions={uploadOptions} cancelOptions={cancelOptions} />
-            <PDFViewer url={"https://pdfobject.com/pdf/sample.pdf"}></PDFViewer>
+            {/* <PDFViewer url={"https://pdfobject.com/pdf/sample.pdf"}></PDFViewer> */}
         </div>
     )
 }
