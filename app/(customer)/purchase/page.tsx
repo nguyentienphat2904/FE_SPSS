@@ -1,5 +1,5 @@
 "use client"
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Card } from 'primereact/card';
 import { Button } from 'primereact/button';
 import { DataTableFilterMeta } from 'primereact/datatable';
@@ -14,19 +14,18 @@ import { Tag } from 'primereact/tag';
 import { Dropdown, DropdownChangeEvent } from 'primereact/dropdown';
 import { Dialog } from 'primereact/dialog';
 import { InputNumber } from 'primereact/inputnumber';
+import { Toast } from 'primereact/toast';
 
+import { useDispatch, useSelector } from 'react-redux';
+import { adjustPurchaseHistory } from '@/redux/purchase.slice';
 
 import './purchase.scss'
 import { SampleData } from './service/SampleData';
+import { createPurchase, getPurchase } from '@/app/api/purchase/purchase';
+import { Purchase } from './service/const';
 
-interface Buy {
-    id: number;
-    number: number;
-    date: string | Date;
-    paid: boolean
-}
 export default function BuyPaper() {
-    const [prints, setPrints] = useState<Buy[]>([]);
+    const [prints, setPrints] = useState<Purchase[]>(useSelector((state: any) => state.purchase.purchaseHistory));
     const [filters, setFilters] = useState<any>({
         global: { value: '', matchMode: FilterMatchMode.CONTAINS },
         number: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
@@ -39,23 +38,41 @@ export default function BuyPaper() {
     const [displayDialog, setDisplayDialog] = useState<boolean>(false);
     const [quantity, setQuantity] = useState<number>(1);
 
-    const getSeverity = (paid: boolean) => {
+    const toast = useRef<Toast | null>(null);
+
+    const dispatch = useDispatch()
+
+    const getSeverity = (paid: string) => {
         switch (paid) {
-            case true:
+            case 'PAID':
                 return 'success';
 
-            case false:
+            case 'UNPAID':
                 return 'danger';
         }
     };
 
     useEffect(() => {
-        SampleData.getFullData().then((data) => setPrints(getPrints(data)));
+        // SampleData.getFullData().then((data) => setPrints(getPrints(data)));
+        const getPurchaseList = async () => {
+            try {
+                const response = await getPurchase();
+                setPrints(response.data)
+                dispatch(adjustPurchaseHistory(response.data));
+            } catch (error: any) {
+                toast.current?.show({
+                    severity: 'error',
+                    summary: 'Lỗi',
+                    detail: error.message,
+                });
+            }
+        }
+        getPurchaseList()
     }, []);
 
-    const getPrints = (data: Buy[]) => {
+    const getPrints = (data: Purchase[]) => {
         return [...(data || [])].map((d) => {
-            d.date = new Date(d.date);
+            d.createdAt = new Date(d.createdAt);
             return d;
         })
     }
@@ -79,7 +96,7 @@ export default function BuyPaper() {
             showClear />;
     };
 
-    const paidItemTemplate = (option: boolean) => {
+    const paidItemTemplate = (option: string) => {
         return <Tag value={option} severity={getSeverity(option)} />;
     };
 
@@ -100,7 +117,7 @@ export default function BuyPaper() {
             <div className='mb-4'>
                 <h2 className='mb-4' style={{ color: '#6366f1', fontStyle: 'italic', fontWeight: '700' }}>Mua giấy in</h2>
                 <div className='header'>
-                    <h6 className="">Lịch sử mua giấy</h6>
+                    <h6 className="mt-3 header-left">Lịch sử mua giấy</h6>
                     <div className='header-right'>
                         <Button label='Mua giấy' className='mr-4' onClick={openDialog}></Button>
                         <InputText
@@ -117,8 +134,8 @@ export default function BuyPaper() {
         );
     };
 
-    const dateBodyTemplate = (rowData: Buy) => {
-        return formatDate(rowData.date);
+    const dateBodyTemplate = (rowData: Purchase) => {
+        return formatDate(rowData.createdAt);
     };
 
     const dateFilterTemplate = (options: ColumnFilterElementTemplateOptions) => {
@@ -139,8 +156,8 @@ export default function BuyPaper() {
         );
     };
 
-    const paidBodyTemplate = (rowData: Buy) => {
-        return <Tag value={rowData.paid ? "Đã thanh toán" : "Chưa thanh toán"} severity={getSeverity(rowData.paid)} />;
+    const paidBodyTemplate = (rowData: Purchase) => {
+        return <Tag value={rowData.status ? "Đã thanh toán" : "Chưa thanh toán"} severity={getSeverity(rowData.status)} />;
     };
 
     const openDialog = (): void => {
@@ -151,26 +168,49 @@ export default function BuyPaper() {
         setDisplayDialog(false);
     };
 
-    const handleConfirm = (): void => {
-        console.log(`Số lượng giấy muốn mua: ${quantity}`);
-        closeDialog();
+    const handleConfirm = async () => {
+        try {
+            const response = await createPurchase(quantity);
+            const newPurchase = response.data;
+            setPrints(prev => [newPurchase, ...prev]);
+            dispatch(adjustPurchaseHistory([newPurchase, ...prints]));
+            toast.current?.show({
+                severity: 'success',
+                summary: 'Thành công',
+                detail: response.message,
+            });
+            closeDialog();
+        } catch (error: any) {
+            toast.current?.show({
+                severity: 'error',
+                summary: 'Lỗi',
+                detail: error.message,
+            });
+        }
     };
 
     const header = renderHeader();
 
+    const formatCurrency = (amount: number) => {
+        return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+    };
+
     return (
         <div>
+            <Toast ref={toast}></Toast>
             <div className="card">
                 {header}
                 <DataTable value={prints} paginator rows={10}
                     paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-                    rowsPerPageOptions={[10, 25, 50]} dataKey="id"
-                    filters={filters} filterDisplay="menu" globalFilterFields={['number', 'date', 'paid']}
-                    emptyMessage="Không có bản in gần đây." currentPageReportTemplate="Hiển thị {first} tới {last} trên {totalRecords}">
-                    <Column field="number" header="Số lượng" sortable filterPlaceholder="Search by number" style={{ minWidth: '14rem' }} />
-                    <Column field="date" header="Thời gian mua" sortable filterField="date" dataType="date" style={{ minWidth: '12rem' }} body={dateBodyTemplate} filterElement={dateFilterTemplate} />
-                    <Column header="Thành tiền" sortable filterMenuStyle={{ width: '14rem' }} style={{ minWidth: '12rem' }} body={paidBodyTemplate} filterElement={paidFilterTemplate} /></DataTable>
-
+                    rowsPerPageOptions={[10, 25, 50]}
+                    filters={filters} filterDisplay="menu" globalFilterFields={['numPages', 'createdAt', 'cost', 'status']}
+                    emptyMessage="Không có bản in gần đây." currentPageReportTemplate="Hiển thị {first} tới {last} trên {totalRecords}"
+                    scrollable scrollHeight='400px' removableSort>
+                    <Column field="numPages" header="Số lượng" sortable filterPlaceholder="Search by number" style={{ minWidth: '14rem' }} />
+                    <Column field="createdAt" header="Thời gian mua" sortable filterField="date" dataType="date" style={{ minWidth: '12rem' }} body={dateBodyTemplate} filterElement={dateFilterTemplate} />
+                    <Column field="cost" header="Thành tiền" sortable style={{ minWidth: '12rem' }} body={(rowData) => formatCurrency(rowData.cost)} />
+                    <Column header="Thanh toán" sortable filterMenuStyle={{ width: '14rem' }} style={{ minWidth: '12rem' }} body={paidBodyTemplate} filterElement={paidFilterTemplate} />
+                </DataTable>
             </div>
             <Dialog
                 header="Mua giấy in"
