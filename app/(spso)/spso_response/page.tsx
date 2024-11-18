@@ -28,8 +28,8 @@ export default function SPSOResponsePage() {
     const [selectedDetail, setSelectedDetail] = useState<Feedback | null>(null);
     const [filters, setFilters] = useState<any>({
         global: { value: '', matchMode: FilterMatchMode.CONTAINS },
-        number: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-        date: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+        customerId: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.CONTAINS }] },
+        createdAt: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.CONTAINS }] },
     });
     const [response, setResponse] = useState<IResponse | null>(null);
 
