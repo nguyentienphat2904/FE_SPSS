@@ -12,37 +12,50 @@ import { InputTextarea } from 'primereact/inputtextarea';
 import { RadioButton, RadioButtonChangeEvent } from 'primereact/radiobutton';
 import { InputNumber, InputNumberValueChangeEvent } from 'primereact/inputnumber';
 import { Dialog } from 'primereact/dialog';
+import { Dropdown, DropdownChangeEvent } from 'primereact/dropdown';
 import { InputText } from 'primereact/inputtext';
 import { Tag } from 'primereact/tag';
 import { FilterMatchMode, FilterOperator } from 'primereact/api';
+
+
 import UploadImage from './component/UploadImage';
 
 import './printer.scss'
-import { SampleData } from './service/SampleData'
 
-interface Printer {
-    id: string | null,
-    name: string,
-    company: string,
-    type: string,
-    numOfPrint: number,
-    status: boolean,
-    activate: boolean
-}
+// import { searchPrinter } from './service/printer.js'
+import { Printer, Location, formCreate } from './service/const'
+import { getLocation, searchPrinter, createPrinter, delPrinter } from '@/app/api/printer/printer';
+
 
 export default function PrintsPage() {
     let emptyPrinter: Printer = {
         id: null,
         name: '',
-        company: '',
-        type: '',
-        numOfPrint: 0,
-        status: false,
-        activate: false
+        brand: '',
+        active: false,
+        locationId: '',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        location: {
+            id: '',
+            block: '',
+            room: '',
+            branch: ''
+        }
+    }
+
+    let emptyFormData: formCreate = {
+        name: '',
+        brand: '',
+        active: false,
+        locationId: ''
     }
 
     const [printers, setPrinters] = useState<Printer[]>([]);
     const [printer, setPrinter] = useState<Printer>(emptyPrinter);
+    const [locations, setLocations] = useState<Location[]>([]);
+    const [selectedLocation, setSelectedLocation] = useState<Location>();
+    const [customizeLocation, setCustomizeLocation] = useState<Location[]>([]);
 
     const [newPrinterDialog, setNewPrinterDialog] = useState<boolean>(false);
     const [deletePrinterDialog, setDeletePrinterDialog] = useState<boolean>(false);
@@ -50,12 +63,19 @@ export default function PrintsPage() {
 
     const [selectedPrinters, setSelectedPrinters] = useState<Printer[]>([]);
     const [submitted, setSubmitted] = useState<boolean>(false);
+    const [active, setActive] = useState<boolean>(false);
+
+    const [formData, setFormData] = useState<formCreate>(emptyFormData);
+
+    const optionsActive = [
+        { label: 'Đã kích hoạt', value: true },
+        { label: 'Chưa kích hoạt', value: false }
+    ];
 
     const [filters, setFilters] = useState<any>({
         global: { value: '', matchMode: FilterMatchMode.CONTAINS },
         name: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-        type: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-        numOfPrint: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+        brand: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
     })
     const [globalFilterValue, setGlobalFilterValue] = useState<string>('');
 
@@ -73,8 +93,80 @@ export default function PrintsPage() {
     };
 
     useEffect(() => {
-        SampleData.getFullData().then((data) => setPrinters(data));
-    }, []);
+        const fetchData = async () => {
+            try {
+                const response = await searchPrinter();
+                if (response.data) {
+                    setPrinters(response.data);
+                }
+            } catch (error: any) {
+                const mes = error.message;
+                if (mes === "Request failed with status code 422") {
+                    toast.current?.show({
+                        severity: "error",
+                        summary: "Thất bại",
+                        detail: "Thông tin không hợp lệ",
+                        life: 3000,
+                    });
+                }
+                console.error("Error fetching groups:", error)
+            }
+        }
+        fetchData();
+    }, [])
+
+    const customizeLocations = (locations: Location[]) => {
+        return locations.map(location => ({
+            ...location,
+            displayName: `${location.room} - ${location.block} - ${location.branch}`
+        }));
+    };
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const response = await getLocation();
+                if (response.data) {
+                    setLocations(response.data)
+                }
+            } catch (error: any) {
+                const mes = error.message;
+                if (mes === "Request failed with status code 422") {
+                    toast.current?.show({
+                        severity: "error",
+                        summary: "Thất bại",
+                        detail: "Thông tin không hợp lệ",
+                        life: 3000,
+                    });
+                }
+                console.error("Error fetching groups:", error)
+            }
+        }
+        fetchData();
+    }, [])
+
+    useEffect(() => {
+        const updatedLocations = customizeLocations(locations);
+        setCustomizeLocation(updatedLocations);
+    }, [locations]);
+
+    console.log(customizeLocation);
+    // console.log(printers[0]?.createdAt, locations);
+
+
+
+    // const customizedLocations = locations.map(location => ({
+    //     ...location,
+    //     displayName: `${location.room} - ${location.block} - ${location.branch}`
+    // }));
+
+    const formatDate = (value: string | Date) => {
+        return new Date(value).toLocaleDateString('en-US', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+    };
 
     const openNew = () => {
         setPrinter(emptyPrinter);
@@ -95,7 +187,7 @@ export default function PrintsPage() {
         setDeletePrintersDialog(false);
     };
 
-    const saveProduct = () => {
+    const saveProduct = async () => {
         setSubmitted(true);
 
         if (printer.name.trim()) {
@@ -114,7 +206,6 @@ export default function PrintsPage() {
                 });
             } else {
                 _printer.id = createId();
-                // _printer.image = 'product-placeholder.svg';
                 _printers.push(_printer);
                 toast.current?.show({
                     severity: 'success',
@@ -128,21 +219,36 @@ export default function PrintsPage() {
             setNewPrinterDialog(false);
             setPrinter(emptyPrinter);
         }
+
+        console.log("formData: ", formData);
+        const create = await createPrinter(formData);
+        if (create.data) {
+            setFormData(emptyFormData);
+        }
     };
 
-    const editProduct = (printer: Printer) => {
-        setPrinter({ ...printer });
+    const editProduct = (rowData: Printer) => {
+        setPrinter({ ...rowData });
+
+        const matchedLocation = customizeLocation?.find(location => location.id === rowData.location.id);
+        setSelectedLocation(matchedLocation);
+        setActive(rowData.active);
         setNewPrinterDialog(true);
     };
+
 
     const confirmDeleteProduct = (printer: Printer) => {
         setPrinter(printer);
         setDeletePrinterDialog(true);
     };
 
-    const deletePrinter = () => {
+    const deletePrinter = async () => {
         let _printers = printers.filter((val) => val.id !== printer.id);
+        let _id = printer.id;
+        let response = await delPrinter(_id);
+        if (response) {
 
+        }
         setPrinters(_printers);
         setDeletePrinterDialog(false);
         setPrinter(emptyPrinter);
@@ -152,6 +258,7 @@ export default function PrintsPage() {
             detail: 'Xóa máy in thành công',
             life: 3000
         });
+
     };
 
     const findIndexById = (id: string) => {
@@ -205,11 +312,16 @@ export default function PrintsPage() {
     const onInputChange = (e: React.ChangeEvent<HTMLInputElement>, name: string) => {
         const val = (e.target && e.target.value) || '';
         let _printer = { ...printer };
+        let _form = { ...formData };
 
         // @ts-ignore
         _printer[name] = val;
 
         setPrinter(_printer);
+
+        // @ts-ignore
+        _form[name] = val;
+        setFormData(_form);
     };
 
     const onInputTextAreaChange = (e: React.ChangeEvent<HTMLTextAreaElement>, name: string) => {
@@ -222,14 +334,45 @@ export default function PrintsPage() {
         setPrinter(_product);
     };
 
-    const onInputNumberChange = (e: InputNumberValueChangeEvent, name: string) => {
-        const val = e.value ?? 0;
+    const handleActiveChange = (e: DropdownChangeEvent) => {
+        setActive(e.value);
+        const data = e.value;
+        console.log(data);
         let _product = { ...printer };
+        let _form = { ...formData }
 
         // @ts-ignore
-        _product[name] = val;
+        const activeID = 'active';
+        _product[activeID] = data;
+        _form[activeID] = data;
 
         setPrinter(_product);
+        setFormData(_form);
+    };
+
+    const handleLocationChange = (e: DropdownChangeEvent) => {
+        setSelectedLocation(e.value);
+        const data = e.value;
+        const { branch, ...rest } = data;
+
+        let _product = { ...printer };
+        let _form = { ...formData };
+
+        // @ts-ignore
+        // _product[locationId] = rest.id;
+        // _product[location] = rest;
+
+        // Đảm bảo locationId và location là các biến được khai báo
+        const locationIdKey = 'locationId'; // Thay bằng key thực tế nếu cần
+        const locationKey = 'location'; // Thay bằng key thực tế nếu cần
+
+        // Cập nhật printer với rest.id và rest
+        _product[locationIdKey] = rest.id;
+        _product[locationKey] = rest;
+        setPrinter(_product);
+
+        _form[locationIdKey] = rest.id;
+        setFormData(_form);
     };
 
     const onGlobalFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -244,10 +387,14 @@ export default function PrintsPage() {
         setGlobalFilterValue(value);
     };
 
+    const locationBodyTemplate = (rowData: Printer) => {
+        return rowData.location.room + " - " + rowData.location.block;
+    };
+
     const statusBodyTemplate = (rowData: Printer) => {
         return <Tag
-            value={rowData.status ? "Đã kích hoạt" : "Chưa kích hoạt"}
-            severity={getSeverity(rowData.status)}
+            value={rowData.active ? "Đã kích hoạt" : "Chưa kích hoạt"}
+            severity={getSeverity(rowData.active)}
         />;
     };
 
@@ -304,7 +451,7 @@ export default function PrintsPage() {
                         onClick={confirmDeleteSelected} disabled={!selectedPrinters || !selectedPrinters.length}
                     ></Button>
                     <Button
-                        label="Export"
+                        label="Xuất"
                         icon="pi pi-upload"
                         className="p-button-help"
                         onClick={exportCSV}
@@ -326,20 +473,20 @@ export default function PrintsPage() {
 
     const productDialogFooter = (
         <React.Fragment>
-            <Button label="Cancel" icon="pi pi-times" outlined onClick={hideDialog} />
-            <Button label="Save" icon="pi pi-check" onClick={saveProduct} />
+            <Button label="Hủy bỏ" icon="pi pi-times" outlined onClick={hideDialog} />
+            <Button label="Lưu" icon="pi pi-check" onClick={saveProduct} />
         </React.Fragment>
     );
     const deleteProductDialogFooter = (
         <React.Fragment>
-            <Button label="No" icon="pi pi-times" outlined onClick={hideDeleteProductDialog} />
-            <Button label="Yes" icon="pi pi-check" severity="danger" onClick={deletePrinter} />
+            <Button label="Thoát" icon="pi pi-times" outlined onClick={hideDeleteProductDialog} />
+            <Button label="Đồng ý" icon="pi pi-check" severity="danger" onClick={deletePrinter} />
         </React.Fragment>
     );
     const deleteProductsDialogFooter = (
         <React.Fragment>
-            <Button label="No" icon="pi pi-times" outlined onClick={hideDeleteProductsDialog} />
-            <Button label="Yes" icon="pi pi-check" severity="danger" onClick={deleteSelectedProducts} />
+            <Button label="Thoát" icon="pi pi-times" outlined onClick={hideDeleteProductsDialog} />
+            <Button label="Đồng ý" icon="pi pi-check" severity="danger" onClick={deleteSelectedProducts} />
         </React.Fragment>
     );
 
@@ -369,17 +516,17 @@ export default function PrintsPage() {
                         style={{ minWidth: '8rem' }}
                     />
                     <Column
-                        field="company"
+                        field="brand"
                         header="Hãng"
                         sortable
                         style={{ minWidth: '8rem' }}
                     />
                     <Column
-                        field="numOfPrint"
-                        header="Số bản in"
+                        header="Vị trí"
                         sortable
                         filterPlaceholder="Search by number"
-                        style={{ minWidth: '8rem' }} />
+                        style={{ minWidth: '8rem' }}
+                        body={locationBodyTemplate} />
                     <Column
                         header="Trạng thái"
                         sortable
@@ -397,20 +544,14 @@ export default function PrintsPage() {
 
             <Dialog
                 visible={newPrinterDialog}
-                style={{ width: '60rem' }}
-                breakpoints={{ '960px': '75vw', '641px': '90vw' }}
                 header="Máy in"
                 modal
                 className="p-fluid"
                 footer={productDialogFooter}
                 onHide={hideDialog}
             >
-                <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center'
-                }}>
-                    <div style={{ width: '49%' }}>
+                <div className='popup-info'>
+                    <div className='popup-info-left'>
                         <div className="field">
                             <label htmlFor="name" className="font-bold">
                                 Tên máy in
@@ -432,29 +573,35 @@ export default function PrintsPage() {
                             alignItems: 'center'
                         }}>
                             <div className="field" style={{ width: '48%' }}>
-                                <label htmlFor="type" className="font-bold">
-                                    Loại
+                                <label htmlFor="location" className="font-bold">
+                                    Vị trí
                                 </label>
-                                <InputText
-                                    id="type"
-                                    value={printer.type}
-                                    onChange={(e) => onInputChange(e, 'type')}
+                                {/* <InputText
+                                    id="location"
+                                    value={printer.location.room + " - " + printer.location.block + " - " + printer.location.branch}
+                                    onChange={(e) => onInputChange(e, 'location')}
                                     required
                                     autoFocus
                                     className={classNames({ 'p-invalid': submitted && !printer.type })}
+                                /> */}
+                                <Dropdown
+                                    value={selectedLocation}
+                                    onChange={handleLocationChange}
+                                    options={customizeLocation}
+                                    optionLabel="displayName"
                                 />
                             </div>
                             <div className="field" style={{ width: '48%' }}>
-                                <label htmlFor="company" className="font-bold">
+                                <label htmlFor="brand" className="font-bold">
                                     Hãng
                                 </label>
                                 <InputText
-                                    id="company"
-                                    value={printer.company}
-                                    onChange={(e) => onInputChange(e, 'company')}
+                                    id="brand"
+                                    value={printer.brand}
+                                    onChange={(e) => onInputChange(e, 'brand')}
                                     required
                                     autoFocus
-                                    className={classNames({ 'p-invalid': submitted && !printer.company })}
+                                    className={classNames({ 'p-invalid': submitted && !printer.brand })}
                                 />
                             </div>
                         </div>
@@ -463,14 +610,23 @@ export default function PrintsPage() {
                             <label htmlFor="status" className="font-bold">
                                 Tình trạng máy
                             </label>
-                            <InputText
+                            {/* <InputText
                                 id="company"
-                                value={printer.status ? "Đã kích hoạt" : "Chưa kích hoạt"}
+                                value={printer.active ? "Đã kích hoạt" : "Chưa kích hoạt"}
                                 onChange={(e) => onInputChange(e, 'company')}
                                 required
                                 autoFocus
-                                className={classNames({ 'p-invalid': submitted && !printer.status })}
+                                className={classNames({ 'p-invalid': submitted && !printer.active })}
+                            /> */}
+
+                            <Dropdown
+                                value={active}
+                                options={optionsActive}
+                                onChange={handleActiveChange}
+                                placeholder="Chọn trạng thái"
+                                optionLabel="label" // Hiển thị nhãn (label) trong dropdown
                             />
+
                         </div>
 
                         <div style={{
@@ -483,12 +639,10 @@ export default function PrintsPage() {
                                     Ngày mua
                                 </label>
                                 <InputText
-                                    id="type"
-                                    value={printer.type}
-                                    onChange={(e) => onInputChange(e, 'type')}
+                                    id="create"
+                                    value={formatDate(printer.createdAt)}
                                     required
                                     autoFocus
-                                    className={classNames({ 'p-invalid': submitted && !printer.type })}
                                 />
                             </div>
                             <div className="field" style={{ width: '48%' }}>
@@ -496,12 +650,11 @@ export default function PrintsPage() {
                                     Ngày bảo hành
                                 </label>
                                 <InputText
-                                    id="company"
-                                    value={printer.company}
+                                    id="update"
+                                    value={formatDate(printer.updatedAt)}
                                     onChange={(e) => onInputChange(e, 'company')}
                                     required
                                     autoFocus
-                                    className={classNames({ 'p-invalid': submitted && !printer.company })}
                                 />
                             </div>
                         </div>
@@ -514,12 +667,11 @@ export default function PrintsPage() {
                                 onChange={(e) => onInputChange(e, 'note')}
                                 required
                                 autoFocus
-                                className={classNames({ 'p-invalid': submitted && !printer.status })}
                             />
                         </div>
                     </div>
 
-                    <div style={{ width: '49%' }}>
+                    <div className='popup-info-right'>
                         <UploadImage />
                     </div>
                 </div>
