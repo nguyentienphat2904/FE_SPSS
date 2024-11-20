@@ -24,7 +24,7 @@ import './printer.scss'
 
 // import { searchPrinter } from './service/printer.js'
 import { Printer, Location, formCreate } from './service/const'
-import { getLocation, searchPrinter, createPrinter, delPrinter } from '@/app/api/printer/printer';
+import { getLocation, searchPrinter, createPrinter, delPrinter, updatePrinter } from '@/app/api/spso/printer';
 
 
 export default function PrintsPage() {
@@ -56,6 +56,7 @@ export default function PrintsPage() {
     const [locations, setLocations] = useState<Location[]>([]);
     const [selectedLocation, setSelectedLocation] = useState<Location>();
     const [customizeLocation, setCustomizeLocation] = useState<Location[]>([]);
+    const [openUpdate, setOpenUpdate] = useState<boolean>(false);
 
     const [newPrinterDialog, setNewPrinterDialog] = useState<boolean>(false);
     const [deletePrinterDialog, setDeletePrinterDialog] = useState<boolean>(false);
@@ -150,7 +151,7 @@ export default function PrintsPage() {
         setCustomizeLocation(updatedLocations);
     }, [locations]);
 
-    console.log(customizeLocation);
+    // console.log(customizeLocation);
     // console.log(printers[0]?.createdAt, locations);
 
 
@@ -220,10 +221,19 @@ export default function PrintsPage() {
             setPrinter(emptyPrinter);
         }
 
-        console.log("formData: ", formData);
-        const create = await createPrinter(formData);
-        if (create.data) {
-            setFormData(emptyFormData);
+        if (!openUpdate) {
+            // console.log("formData: ", formData);
+            const create = await createPrinter(formData);
+            if (create.data) {
+                setFormData(emptyFormData);
+            }
+        } else {
+            // console.log("data hienn tai: ", printer);
+            const { id, name, brand, active, locationId } = printer;
+            const newData = { id, name, brand, active, locationId }
+            // console.log("Sua: ", newData);
+            const update = await updatePrinter(newData?.id, newData);
+            setOpenUpdate(false);
         }
     };
 
@@ -233,6 +243,7 @@ export default function PrintsPage() {
         const matchedLocation = customizeLocation?.find(location => location.id === rowData.location.id);
         setSelectedLocation(matchedLocation);
         setActive(rowData.active);
+        setOpenUpdate(true);
         setNewPrinterDialog(true);
     };
 
@@ -293,20 +304,38 @@ export default function PrintsPage() {
         setDeletePrintersDialog(true);
     };
 
-    const deleteSelectedProducts = () => {
-        let _products = printers.filter((val) => !selectedPrinters.includes(val));
+    // const deleteSelectedProducts = () => {
+    //     let _products = printers.filter((val) => !selectedPrinters.includes(val));
 
-        setPrinters(_products);
-        setDeletePrintersDialog(false);
-        setSelectedPrinters([]);
-        toast.current?.show({ severity: 'success', summary: 'Successful', detail: 'Products Deleted', life: 3000 });
-    };
+    //     setPrinters(_products);
+    //     setDeletePrintersDialog(false);
+    //     setSelectedPrinters([]);
+    //     toast.current?.show({ severity: 'success', summary: 'Successful', detail: 'Products Deleted', life: 3000 });
+    // };
 
-    const onCategoryChange = (e: RadioButtonChangeEvent) => {
-        let _printer = { ...printer };
+    const deleteSelectedProducts = async () => {
+        try {
+            // Thực hiện các request xóa và bỏ qua lỗi
+            const results = await Promise.allSettled(
+                selectedPrinters.map(async (_printer) => delPrinter(_printer.id))
+            );
 
-        // _printer['category'] = e.value;
-        setPrinter(_printer);
+            // Lọc danh sách local sau khi hoàn thành
+            const _products = printers.filter((val) => !selectedPrinters.includes(val));
+            setPrinters(_products);
+            setDeletePrintersDialog(false);
+            setSelectedPrinters([]);
+
+            // Hiển thị thông báo thành công
+            toast.current?.show({
+                severity: "success",
+                summary: "Successful",
+                detail: "Products Deleted",
+                life: 3000
+            });
+        } catch (error) {
+            console.error("Unexpected error:", error);
+        }
     };
 
     const onInputChange = (e: React.ChangeEvent<HTMLInputElement>, name: string) => {
@@ -337,7 +366,7 @@ export default function PrintsPage() {
     const handleActiveChange = (e: DropdownChangeEvent) => {
         setActive(e.value);
         const data = e.value;
-        console.log(data);
+        // console.log(data);
         let _product = { ...printer };
         let _form = { ...formData }
 
@@ -505,7 +534,7 @@ export default function PrintsPage() {
                     paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
                     currentPageReportTemplate="Hiển thị {first} tới {last} trên {totalRecords}"
                     emptyMessage="Không có bản in gần đây."
-                    globalFilterFields={['name', 'type', 'numOfPrint']}
+                    globalFilterFields={['name', 'brand']}
                     selectionMode="multiple"
                 >
                     <Column selectionMode="multiple" exportable={false}></Column>

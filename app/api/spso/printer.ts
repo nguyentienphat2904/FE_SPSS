@@ -58,3 +58,15 @@ export const delPrinter = async (id: any) => {
         return { success: false, message: 'Failed to delete printer. Please try again later.' };
     }
 }
+
+export const updatePrinter = async (id: any, body: any) => {
+    try {
+        const response = await axios.patch(`${BASE_URL}/printer/update/${id}`, body, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        })
+    } catch (error) {
+
+    }
+}
