@@ -1,5 +1,5 @@
 import axios from "axios";
-import { baseURL, token } from "@/app/(customer)/response/service/const";
+import { baseURL, Feedback, token } from "@/app/(customer)/response/service/const";
 
 import { CRUFeedbackResponse, GetFeedbacksResponse } from "@/app/(customer)/response/service/const";
 
