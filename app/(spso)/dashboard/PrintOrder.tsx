@@ -1,5 +1,5 @@
 'use client'
-import React, { useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 
 import { FilterMatchMode, FilterOperator } from 'primereact/api'
 
@@ -9,21 +9,22 @@ import { InputText } from 'primereact/inputtext';
 import { Tag } from 'primereact/tag'
 import { Dropdown, DropdownChangeEvent } from 'primereact/dropdown'
 import { Dialog } from 'primereact/dialog'
+import { Toast } from 'primereact/toast'
+import { Button } from 'primereact/button'
 // import { IconField } from 'primereact/iconfield';
 // import { InputIcon } from 'primereact/inputicon';
 
-import { PrintOrderData } from './const'
-import { Button } from 'primereact/button'
 
-interface IPrintOrder {
-    id: string,
-    name: string,
-    date: string | Date,
-    place: string,
-    status: string
-}
+import { searchDocName, searchPrinterOrder } from '@/app/api/spso/dashboard'
+
+import { IPrintOrder, PrintingOrder } from './const'
 
 export default function PrintOrder() {
+    const toast = useRef<Toast>(null);
+    const [PrintOrder, setPrintOrder] = useState<IPrintOrder[]>([]);
+    const [PrintingOrder, setPrintingOrder] = useState<PrintingOrder[]>([]);
+    const [isPrintingOrderLoaded, setIsPrintingOrderLoaded] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
 
     const [filters, setFilters] = useState<DataTableFilterMeta>({
         global: { value: null, matchMode: FilterMatchMode.CONTAINS },
@@ -36,6 +37,101 @@ export default function PrintOrder() {
         activity: { value: null, matchMode: FilterMatchMode.BETWEEN }
     });
     const [globalFilterValue, setGlobalFilterValue] = useState<string>('');
+    const [statuses] = useState<string[]>([
+        'Chưa in',
+        'Đã in',
+    ]);
+
+    const [detailVisible, setDetailVisible] = useState<boolean>(false);
+
+    const [detail, setDetail] = useState<any>();
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const response = await searchPrinterOrder();
+                if (response.data) {
+                    setPrintingOrder(response.data);
+                }
+            } catch (error: any) {
+                const mes = error.message;
+                if (mes === "Request failed with status code 422") {
+                    toast.current?.show({
+                        severity: "error",
+                        summary: "Thất bại",
+                        detail: "Thông tin không hợp lệ",
+                        life: 3000,
+                    });
+                }
+                console.error("Error fetching groups:", error)
+            } finally {
+                setIsPrintingOrderLoaded(true);
+            }
+        }
+        fetchData();
+    }, [])
+
+    useEffect(() => {
+        if (!isPrintingOrderLoaded) return;
+        const getDocName = async () => {
+            try {
+                for (const doc of PrintingOrder) {
+                    const response = await searchDocName(doc.documentId);
+                    doc.documentName = response.data.name;
+                }
+            } catch (error) {
+                console.error("Error fetching document names:", error);
+            } finally {
+                setIsLoading(true);
+            }
+        };
+
+        getDocName();
+    }, [isPrintingOrderLoaded, PrintingOrder]);
+
+    if (!isLoading) {
+        return <div>Loading data...</div>;
+    }
+
+    // useEffect(() => {
+    //     if (!isPrintingOrderLoaded) return;
+    //     const getDocName = async () => {
+    //         try {
+    //             const updatedOrders = await Promise.all(
+    //                 PrintingOrder.map(async (doc) => {
+    //                     const response = await searchDocName(doc.documentId);
+
+    //                     // Trả về đối tượng đã được thêm trường mới
+    //                     return {
+    //                         ...doc,
+    //                         documentName: response.data.name,
+    //                     };
+    //                 })
+    //             );
+
+    //             console.log(updatedOrders); // Kiểm tra danh sách đã được cập nhật
+    //         } catch (error) {
+    //             console.error("Error fetching document names:", error);
+    //         } finally {
+    //             setIsDocumentNameLoaded(true);
+    //             console.log("Printing order", PrintingOrder)
+    //         }
+    //     };
+
+    //     getDocName();
+    // }, [isPrintingOrderLoaded, PrintingOrder]);
+
+    // useEffect(() => {
+    //     if (!isDocumentNameLoaded) return;
+    //     const transformedData = PrintingOrder.map((order) => ({
+    //         id: order.id,
+    //         name: order.documentName,
+    //         printingStatus: order.printingStatus
+    //     }));
+
+    //     setPrintOrder(transformedData);
+    // }, [isDocumentNameLoaded, PrintingOrder]);
+
 
     const onGlobalFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
@@ -47,14 +143,7 @@ export default function PrintOrder() {
         setGlobalFilterValue(value);
     };
 
-    const [statuses] = useState<string[]>([
-        'Chưa in',
-        'Đã in',
-    ]);
 
-    const [detailVisible, setDetailVisible] = useState<boolean>(false);
-
-    const [detail, setDetail] = useState<any>();
 
     const renderHeader = () => {
         return (
@@ -75,25 +164,31 @@ export default function PrintOrder() {
 
     const getSeverity = (status: string) => {
         switch (status) {
-            case 'Đã in':
-                return 'success';
-
-            case 'Chưa in':
+            case 'PENDING':
                 return 'danger';
-
+            case 'PAID':
+                return 'success';
+            case 'SUCCESS':
+                return 'success';
             default:
-                return null;
+                return 'warning';
         }
     };
 
-    const renderStatus = (rowData: IPrintOrder) => {
+    const renderStatus = (rowData: PrintingOrder) => {
         return (
-            <Tag value={rowData.status} severity={getSeverity(rowData.status)} />
+            <Tag value={rowData.printingStatus} severity={getSeverity(rowData.printingStatus)} />
         );
     }
 
-    const renderAction = (rowData: IPrintOrder) => {
-        if (rowData.status === 'Chưa in')
+    const renderPurchase = (rowData: PrintingOrder) => {
+        return (
+            <Tag value={rowData.purchasingStatus} severity={getSeverity(rowData.purchasingStatus)} />
+        );
+    }
+
+    const renderAction = (rowData: PrintingOrder) => {
+        if (rowData.printingStatus === 'PENDING')
             return (
                 <Button size='small' icon='pi pi-print' text rounded></Button>
             );
@@ -129,14 +224,15 @@ export default function PrintOrder() {
 
     return (
         <div>
-            <DataTable value={PrintOrderData} header={renderHeader} dataKey='id' rows={10}
+            <Toast ref={toast} />
+            <DataTable value={PrintingOrder} header={renderHeader} dataKey='id' rows={10}
                 filters={filters}
                 filterDisplay="menu"
                 globalFilterFields={[
-                    'name',
+                    'documentName',
                     'date',
                     'place',
-                    'status',
+                    'printingStatus',
                 ]}
                 selectionMode="single"
                 removableSort
@@ -148,11 +244,12 @@ export default function PrintOrder() {
                 rowsPerPageOptions={[10, 25, 50]}
                 onRowClick={showDetail}
             >
-                <Column field='name' header="Bản in" sortable style={{ minWidth: '10rem' }}></Column>
-                <Column field='date' header="Ngày nhận" sortable style={{ minWidth: '8rem' }}></Column>
-                <Column field='place' header="Nơi nhận" sortable style={{ minWidth: '8rem' }}></Column>
-                <Column field='status' body={renderStatus} header="Trạng thái in" sortable style={{ minWidth: '8rem' }}
+                <Column field='documentName' header="Bản in" sortable style={{ minWidth: '10rem' }}></Column>
+                {/* <Column field='date' header="Ngày nhận" sortable style={{ minWidth: '8rem' }}></Column>
+                <Column field='place' header="Nơi nhận" sortable style={{ minWidth: '8rem' }}></Column> */}
+                <Column field='printingStatus' body={renderStatus} header="Trạng thái in" sortable style={{ minWidth: '8rem' }}
                     filter showFilterMatchModes={false} showFilterOperator={false} filterElement={statusFilterTemplate} ></Column>
+                <Column field='purchasingStatus' body={renderPurchase} header="Thanh toán" sortable style={{ minWidth: '8rem' }} />
                 <Column body={renderAction} header="Thao tác" style={{ minWidth: '8rem' }}></Column>
             </DataTable>
             <Dialog visible={detailVisible} onHide={() => setDetailVisible(false)} header="Thông tin chi tiết"
@@ -162,12 +259,10 @@ export default function PrintOrder() {
                         (
                             <div>
                                 <ul>
-                                    <li>{detail.user?.firstName} {detail.user?.lastName}</li>
-                                    <li>{detail.name}</li>
-                                    <li>{detail.date}</li>
-                                    <li>{detail.place}</li>
-                                    <li>{detail.status}</li>
-                                    <li>{detail.paid}</li>
+                                    <li>{detail.customerId}</li>
+                                    <li>{detail.documentName}</li>
+                                    <li>{detail.printingStatus}</li>
+                                    <li>{detail.purchasingStatus}</li>
                                 </ul>
                             </div>
                         )

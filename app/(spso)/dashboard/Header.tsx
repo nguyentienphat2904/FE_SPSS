@@ -1,19 +1,60 @@
-import React from 'react'
-
+'use client'
+import React, { useState } from 'react'
+import { useEffect } from 'react'
 import { Card } from 'primereact/card'
+import { searchPrinterOrder } from '@/app/api/spso/dashboard'
+import { searchPrinter } from '@/app/api/spso/printer'
+
+import { PrintingOrder } from './const'
+import { Printer } from '../printers/service/const'
 
 export default function Header() {
+    const [printingOrder, setPrintingOrder] = useState<PrintingOrder[]>([])
+    const [printer, setPrinter] = useState<Printer[]>([])
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const response = await searchPrinterOrder();
+                if (response.data) {
+                    setPrintingOrder(response.data);
+                }
+            } catch (error: any) {
+                const mes = error.message;
+                console.error("Error fetching groups:", mes)
+            }
+        }
+        fetchData();
+    }, [])
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const response = await searchPrinter();
+                if (response.data) {
+                    setPrinter(response.data);
+                }
+            } catch (error: any) {
+                const mes = error.message;
+                console.error("Error fetching groups:", mes)
+            }
+        }
+        fetchData();
+    }, [])
 
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
     };
+
+    const countPaid = printingOrder.filter(item => item.printingStatus === "PENDING").length;
+    const countPrinter = printer.filter(item => item.active === true).length;
 
     return (
         <div className='dashboard-header'>
             <Card title="Số bản in đang chờ">
                 <div className='flex justify-content-between'>
                     <div>
-                        <div className="text-900 font-medium text-xl text-red-500 font-bold font-italic">50</div>
+                        <div className="text-900 font-medium text-xl text-red-500 font-bold font-italic">{countPaid}</div>
                     </div>
                     <div className="flex align-items-center justify-content-center border-round" style={{ width: '2.5rem', height: '2.5rem' }}>
                         <i className="pi pi-clone text-purple-500 text-xl" />
@@ -23,7 +64,7 @@ export default function Header() {
             <Card title="Số máy in đang hoạt động">
                 <div className='flex justify-content-between'>
                     <div>
-                        <div className="text-900 font-medium text-xl text-red-500 font-bold font-italic">15</div>
+                        <div className="text-900 font-medium text-xl text-red-500 font-bold font-italic">{countPrinter}</div>
                     </div>
                     <div className="flex align-items-center justify-content-center border-round" style={{ width: '2.5rem', height: '2.5rem' }}>
                         <i className="pi pi-print text-purple-500 text-xl" />
@@ -34,7 +75,7 @@ export default function Header() {
                     marginTop: '5px',
                     fontStyle: 'italic',
                     color: 'green'
-                }}>trên tổng số 20 máy</p>
+                }}>trên tổng số {printer.length} máy</p>
             </Card>
             <Card title="Doanh thu ngày">
                 <div className='flex justify-content-between'>
