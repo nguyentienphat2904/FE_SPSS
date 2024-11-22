@@ -65,7 +65,7 @@ const AppTopbar = forwardRef<AppTopbarRef>((props, ref) => {
                 </button>
             </div>
 
-            <OverlayPanel ref={op} className="overlay-panel" style={{ marginLeft: '7px' }}>
+            <OverlayPanel ref={op} className="overlay-panel">
                 <button type="button" className="p-link layout-topbar-button" onClick={handleLogout}>
                     <i className="pi pi-sign-out" style={{ marginRight: '8px' }} />
                     <span>Đăng xuất</span>
