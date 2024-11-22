@@ -534,7 +534,7 @@ export default function PrintsPage() {
                     paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
                     currentPageReportTemplate="Hiển thị {first} tới {last} trên {totalRecords}"
                     emptyMessage="Không có bản in gần đây."
-                    globalFilterFields={['name', 'brand']}
+                    globalFilterFields={['name', 'brand', 'location.room', 'location.branch', 'location.block']} filters={filters}
                     selectionMode="multiple"
                 >
                     <Column selectionMode="multiple" exportable={false}></Column>

@@ -82,7 +82,6 @@ export default function PrintOrder() {
             } catch (error) {
                 console.error("Error fetching document names:", error);
             } finally {
-                console.log("docName: ", PrintingOrder);
                 setIsLoading(true);
             }
         };
@@ -133,7 +132,6 @@ export default function PrintOrder() {
     //     setPrintOrder(transformedData);
     // }, [isDocumentNameLoaded, PrintingOrder]);
 
-    console.log("doccccccccc: ", PrintingOrder);
 
     const onGlobalFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
@@ -167,13 +165,13 @@ export default function PrintOrder() {
     const getSeverity = (status: string) => {
         switch (status) {
             case 'PENDING':
-                return 'warning';
-
+                return 'danger';
             case 'PAID':
                 return 'success';
-
+            case 'SUCCESS':
+                return 'success';
             default:
-                return 'danger';
+                return 'warning';
         }
     };
 
