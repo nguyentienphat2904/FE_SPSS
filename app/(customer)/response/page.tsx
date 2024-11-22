@@ -15,7 +15,7 @@ import { Tag } from 'primereact/tag';
 import { Toast } from 'primereact/toast';
 
 import { Feedback } from './service/const';
-import { getFeedbacks, createFeedback, getFeedbackByID, updateFeedback } from '@/app/api/feedback/feedback';
+import { getFeedbacks, createFeedback, getFeedbackByID, updateFeedback, getFeedbackAndResponse } from '@/app/api/feedback/feedback';
 import { getResponseByFeedbackIdAndSPSOId } from '@/app/api/response/response';
 import { IResponse } from '@/app/(spso)/spso_response/service/const';
 
@@ -36,13 +36,13 @@ export default function ResponsePage() {
     const [response, setResponse] = useState<IResponse | null>(null);
     const toast = useRef<Toast | null>(null);
 
-    const getReplyStatus = (reply: boolean) => {
+    const getReplyStatus = (reply: boolean | IResponse | null) => {
         switch (reply) {
-            case true:
-                return 'success';
-
-            case false:
+            case null:
                 return 'danger';
+
+            default:
+                return 'success';
         }
     };
 
@@ -50,8 +50,8 @@ export default function ResponsePage() {
         // SampleData.getFullData().then((data) => setPrints(getPrints(data)));
         const getFeedbackList = async () => {
             try {
-                const response = await getFeedbacks();
-                setPrints(response.data);
+                const feedbackAndResponse = await getFeedbackAndResponse();
+                setPrints(feedbackAndResponse);
             } catch (error: any) {
                 toast.current?.show({
                     severity: 'error',
@@ -93,9 +93,9 @@ export default function ResponsePage() {
         return <Tag value={option} severity={getReplyStatus(option)} />;
     };
 
-    // const replyBodyTemplate = (rowData: Feedback) => {
-    //     return <Tag value={rowData.reply ? "Đã trả lời" : "Chưa trả lời"} severity={getReplyStatus(!!rowData.reply)} />;
-    // };
+    const replyBodyTemplate = (rowData: Feedback) => {
+        return <Tag value={rowData.response ? "Đã trả lời" : "Chưa trả lời"} severity={getReplyStatus(rowData.response)} />;
+    };
 
     const onGlobalFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
@@ -158,7 +158,7 @@ export default function ResponsePage() {
         try {
             const response = await createFeedback(detail);
             const newResponse = response.data;
-            setPrints(prev => [newResponse, ...prev]);
+            setPrints(prev => [{ ...newResponse, response: null }, ...prev]);
             toast.current?.show({
                 severity: 'success',
                 summary: 'Thành công',
@@ -178,9 +178,7 @@ export default function ResponsePage() {
         try {
             setSelectedDetail(rowData);
             setDisplayDetailDialog(true);
-
-            const response = await getResponseByFeedbackIdAndSPSOId(rowData.id, '');
-            setResponse(response.data);
+            setResponse(rowData.response);
         } catch (error: any) {
             toast.current?.show({
                 severity: 'error',
@@ -210,7 +208,7 @@ export default function ResponsePage() {
                     scrollable scrollHeight='500px' removableSort>
                     {/* <Column field="title" header="Tiêu đề" sortable filterPlaceholder="Search by string" style={{ minWidth: '6rem' }} /> */}
                     <Column field="createdAt" header="Thời gian tạo" sortable filterField="date" dataType="date" style={{ minWidth: '12rem' }} body={dateBodyTemplate} filterElement={dateFilterTemplate} />
-                    {/* <Column header="Tình trạng" sortable filterMenuStyle={{ width: '14rem' }} style={{ minWidth: '12rem' }} body={replyBodyTemplate} filterElement={replyFilterTemplate} /> */}
+                    <Column header="Tình trạng" sortable filterMenuStyle={{ width: '14rem' }} style={{ minWidth: '12rem' }} body={replyBodyTemplate} filterElement={replyFilterTemplate} />
                     <Column
                         header="Chi tiết phản hồi"
                         alignHeader='right'
@@ -285,16 +283,14 @@ export default function ResponsePage() {
                 <p>
                     <strong>Chi tiết:</strong>
                     <br />
-                    <div className='ml-4'>
-                        {selectedDetail?.content
-                            ? selectedDetail?.content.split('\n').map((line, index) => (
-                                <React.Fragment key={index}>
-                                    {line}
-                                    <br />
-                                </React.Fragment>
-                            ))
-                            : 'N/A'}
-                    </div>
+                    {selectedDetail?.content
+                        ? selectedDetail?.content.split('\n').map((line, index) => (
+                            <React.Fragment key={index}>
+                                {line}
+                                <br />
+                            </React.Fragment>
+                        ))
+                        : 'N/A'}
                 </p>
                 <p style={{ borderTop: '1px solid #e0e0e0', paddingTop: '8px' }}><strong>Phản hồi:</strong></p>
                 <p><strong>Thời gian tạo:</strong> {response ? formatDate(response.createdAt) : 'N/A'}</p>
@@ -302,16 +298,14 @@ export default function ResponsePage() {
                 <p>
                     <strong>Nội dung:</strong>
                     <br />
-                    <div className='ml-4'>
-                        {response?.content
-                            ? response.content.split('\n').map((line, index) => (
-                                <React.Fragment key={index}>
-                                    {line}
-                                    <br />
-                                </React.Fragment>
-                            ))
-                            : 'N/A'}
-                    </div>
+                    {response?.content
+                        ? response.content.split('\n').map((line, index) => (
+                            <React.Fragment key={index}>
+                                {line}
+                                <br />
+                            </React.Fragment>
+                        ))
+                        : 'N/A'}
                 </p>
                 {/* <p className='text-center'>{selectedDetail?.reply || 'Chưa có phản hồi'}</p> */}
             </Dialog>

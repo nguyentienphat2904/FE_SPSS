@@ -16,7 +16,7 @@ import { Toast } from 'primereact/toast';
 
 import { IResponse } from './service/const';
 import { getResponses, createResponse, updateResponse, getResponseByFeedbackIdAndSPSOId } from '@/app/api/response/response';
-import { getFeedbacks } from '@/app/api/feedback/feedback';
+import { getFeedbackAndResponse, getFeedbacks } from '@/app/api/feedback/feedback';
 import { Feedback } from '@/app/(customer)/response/service/const';
 
 export default function SPSOResponsePage() {
@@ -35,13 +35,13 @@ export default function SPSOResponsePage() {
 
     const toast = useRef<Toast | null>(null);
 
-    const getReplyStatus = (reply: boolean) => {
+    const getReplyStatus = (reply: boolean | IResponse | null) => {
         switch (reply) {
-            case true:
-                return 'success';
-
-            case false:
+            case null:
                 return 'danger';
+
+            default:
+                return 'success';
         }
     };
 
@@ -49,8 +49,8 @@ export default function SPSOResponsePage() {
         // SampleData.getFullData().then((data) => setPrints(getPrints(data)));
         const getResponseList = async () => {
             try {
-                const response = await getFeedbacks();
-                setPrints(response.data);
+                const response = await getFeedbackAndResponse();
+                setPrints(response);
             } catch (error: any) {
                 toast.current?.show({
                     severity: 'error',
@@ -92,9 +92,9 @@ export default function SPSOResponsePage() {
         return <Tag value={option} severity={getReplyStatus(option)} />;
     };
 
-    // const replyBodyTemplate = (rowData: Feedback) => {
-    //     return <Tag value={rowData.reply ? "Đã trả lời" : "Chưa trả lời"} severity={getReplyStatus(!!rowData.reply)} />;
-    // };
+    const replyBodyTemplate = (rowData: Feedback) => {
+        return <Tag value={rowData.response ? "Đã trả lời" : "Chưa trả lời"} severity={getReplyStatus(rowData.response)} />;
+    };
 
     const onGlobalFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
@@ -150,6 +150,16 @@ export default function SPSOResponsePage() {
                 summary: 'Thành công',
                 detail: response.message,
             });
+            const updateFeedbackList = prints.map((feedback: Feedback) => {
+                if (feedback.id === response.data.feedbackId) {
+                    return {
+                        ...feedback,
+                        response: response.data
+                    }
+                }
+                return feedback;
+            });
+            setPrints([...updateFeedbackList]);
             setDisplayDetailDialog(false);
         } catch (error: any) {
             toast.current?.show({
@@ -164,8 +174,7 @@ export default function SPSOResponsePage() {
         try {
             setSelectedDetail(rowData);
             setDisplayDetailDialog(true);
-            const response = await getResponseByFeedbackIdAndSPSOId(rowData.id, "");
-            setResponse(response.data);
+            setResponse(rowData.response);
         } catch (error: any) {
             toast.current?.show({
                 severity: 'error',
@@ -182,7 +191,6 @@ export default function SPSOResponsePage() {
     };
 
     const header = renderHeader();
-
     return (
         <div>
             <Toast ref={toast}></Toast>
@@ -196,8 +204,8 @@ export default function SPSOResponsePage() {
                     scrollable scrollHeight='500px' removableSort>
                     {/*<Column field="title" header="Tiêu đề" sortable filterPlaceholder="Search by string" style={{ minWidth: '6rem' }} />*/}
                     <Column field="createdAt" header="Thời gian tạo" sortable filterField="createdAt" dataType="date" style={{ minWidth: '12rem' }} body={dateBodyTemplate} filterElement={dateFilterTemplate} />
-                    {/* <Column header="Tình trạng" sortable filterMenuStyle={{ width: '14rem' }} style={{ minWidth: '12rem' }} body={replyBodyTemplate} filterElement={replyFilterTemplate} /> */}
                     <Column field="customerId" header="Mã người dùng" sortable />
+                    <Column header="Tình trạng" sortable filterMenuStyle={{ width: '14rem' }} style={{ minWidth: '12rem' }} body={replyBodyTemplate} filterElement={replyFilterTemplate} />
                     <Column
                         header="Chi tiết phản hồi"
                         alignHeader='right'
@@ -224,16 +232,14 @@ export default function SPSOResponsePage() {
                 <p>
                     <strong>Chi tiết:</strong>
                     <br />
-                    <div className='ml-4'>
-                        {selectedDetail?.content
-                            ? selectedDetail?.content.split('\n').map((line, index) => (
-                                <React.Fragment key={index}>
-                                    {line}
-                                    <br />
-                                </React.Fragment>
-                            ))
-                            : 'N/A'}
-                    </div>
+                    {selectedDetail?.content
+                        ? selectedDetail?.content.split('\n').map((line, index) => (
+                            <React.Fragment key={index}>
+                                {line}
+                                <br />
+                            </React.Fragment>
+                        ))
+                        : 'N/A'}
                 </p>
                 <p style={{ borderTop: '1px solid #e0e0e0', paddingTop: '8px' }}><strong>Trả lời:</strong></p>
                 <p><strong>Thời gian tạo:</strong> {response ? formatDate(response.createdAt) : 'N/A'}</p>
@@ -241,16 +247,14 @@ export default function SPSOResponsePage() {
                 <p>
                     <strong>Nội dung:</strong>
                     <br />
-                    <div className='ml-4'>
-                        {response?.content
-                            ? response.content.split('\n').map((line, index) => (
-                                <React.Fragment key={index}>
-                                    {line}
-                                    <br />
-                                </React.Fragment>
-                            ))
-                            : 'N/A'}
-                    </div>
+                    {response?.content
+                        ? response.content.split('\n').map((line, index) => (
+                            <React.Fragment key={index}>
+                                {line}
+                                <br />
+                            </React.Fragment>
+                        ))
+                        : 'N/A'}
                 </p>
 
                 {!response &&
@@ -276,6 +280,6 @@ export default function SPSOResponsePage() {
                     </>
                 }
             </Dialog>
-        </div>
+        </div >
     );
 }
