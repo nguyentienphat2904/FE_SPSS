@@ -7,6 +7,7 @@ import { Dialog } from 'primereact/dialog'
 import { Button } from 'primereact/button'
 
 import { resetState, adjustReset } from '@/redux/print.slice'
+import { createPrintOrder } from '@/app/api/print/print'
 
 export default function PrintFooter() {
 
@@ -15,6 +16,7 @@ export default function PrintFooter() {
     const dispatch = useDispatch();
     const reset = useSelector((state: any) => state.print.reset);
     const amount = useSelector((state: any) => state.print.amount);
+    const file = useSelector((state: any) => state.print.file);
     const range = useSelector((state: any) => state.print.range);
     const size = useSelector((state: any) => state.print.size);
     const orient = useSelector((state: any) => state.print.orient);
@@ -34,15 +36,14 @@ export default function PrintFooter() {
     }
 
     const handleConfirmBtn = () => {
-        if (!size || !orient || !place || !date) {
+        if (!size || !orient || !place.id) {
             toast.current?.show({
                 severity: 'error',
                 summary: 'Lỗi',
                 detail: `Thiếu 
                     ${(size) ? '' : 'Khổ giấy '}
                     ${(orient) ? '' : 'Hướng giấy '}
-                    ${(place) ? '' : 'Nơi nhận '}
-                    ${(date) ? '' : 'Ngày nhận '}
+                    ${(place.id) ? '' : 'Nơi nhận '}
                     `,
                 life: 3000
             });
@@ -59,10 +60,17 @@ export default function PrintFooter() {
         toast.current?.show({ severity: 'warn', summary: 'Huỷ', detail: 'Huỷ đăng ký in', life: 3000 });
     }
 
-    const confirmConfig = () => {
-        dispatch(adjustReset(true));
-        dispatch(resetState());
-        toast.current?.show({ severity: 'success', summary: 'Thành công', detail: 'Thành công đăng ký in', life: 3000 });
+    const confirmConfig = async () => {
+        try {
+            for (let i = 0; i < amount; i++) {
+                await createPrintOrder(oneSide ? 1 : 2, orient === "Ngang" ? "LANDSCAPE" : "PORTRAIT", size, file.id, place.id);
+            }
+            dispatch(adjustReset(true));
+            dispatch(resetState());
+            toast.current?.show({ severity: 'success', summary: 'Thành công', detail: 'Thành công đăng ký in', life: 3000 });
+        } catch (error: any) {
+            toast.current?.show({ severity: 'error', summary: 'Lỗi', detail: error.message, life: 3000 });
+        }
     }
 
     const yesOnClick = () => {
@@ -123,25 +131,16 @@ export default function PrintFooter() {
                                     <label>Số lượng</label> <span>{amount}</span>
                                 </div>
                                 <div className="print-confirm-row">
-                                    <label>Trang in</label> <span>{range}</span>
-                                </div>
-                                <div className="print-confirm-row">
                                     <label>Khổ giấy</label> <span>{size}</span>
                                 </div>
                                 <div className="print-confirm-row">
                                     <label>Hướng giấy</label> <span>{orient}</span>
                                 </div>
                                 <div className="print-confirm-row">
-                                    <label>Nơi nhận</label> <span>{place}</span>
-                                </div>
-                                <div className="print-confirm-row">
-                                    <label>Ngày nhận</label> <span>{date}</span>
+                                    <label>Nơi nhận</label> <span>{place.name}</span>
                                 </div>
                                 <div className="print-confirm-row">
                                     <label>In 1 mặt</label> <span>{oneSide ? 'Có' : 'Không'}</span>
-                                </div>
-                                <div className="print-confirm-row">
-                                    <label>In màu</label> <span>{printColor ? 'Có' : 'Không'}</span>
                                 </div>
                             </div>
                         </div>

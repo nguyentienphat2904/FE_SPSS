@@ -1,22 +1,44 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { FileData, PrinterShow } from "@/app/(customer)/print/const";
 
-const initialState = {
+interface FileState {
+    reset: boolean;
+    file: FileData | null;
+    amount: number;
+    range: string;
+    size: string;
+    orient: string;
+    place: PrinterShow;
+    date: string;
+    oneSide: boolean;
+    printColor: boolean;
+    note: string;
+}
+
+const initialState: FileState = {
     reset: false,
+    file: null,
     amount: 1,
     range: '',
     size: '',
     orient: '',
-    place: '',
+    place: {
+        id: '',
+        name: ''
+    },
     date: '',
     oneSide: false,
     printColor: false,
-    note: ""
+    note: ''
 };
 
 const printSlice = createSlice({
     name: 'print',
     initialState,
     reducers: {
+        setFile: (state, action: PayloadAction<FileData | null>) => {
+            state.file = action.payload;
+        },
         adjustReset: (state, action: PayloadAction<boolean>) => {
             state.reset = action.payload;
         },
@@ -32,7 +54,7 @@ const printSlice = createSlice({
         adjustOrient: (state, action: PayloadAction<string>) => {
             state.orient = action.payload;
         },
-        adjustPlace: (state, action: PayloadAction<string>) => {
+        adjustPlace: (state, action: PayloadAction<PrinterShow>) => {
             state.place = action.payload;
         },
         adjustDate: (state, action: PayloadAction<string>) => {
@@ -62,6 +84,7 @@ const printSlice = createSlice({
 });
 
 export const {
+    setFile,
     adjustReset,
     adjustAmount,
     adjustRange,
