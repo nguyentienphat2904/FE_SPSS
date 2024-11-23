@@ -1,5 +1,5 @@
 "use client"
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Card } from 'primereact/card';
 import { Button } from 'primereact/button';
 import { DataTableFilterMeta } from 'primereact/datatable';
@@ -12,20 +12,22 @@ import { ProgressBar } from 'primereact/progressbar';
 import { Slider, SliderChangeEvent } from 'primereact/slider';
 import { Tag } from 'primereact/tag';
 import { Dropdown, DropdownChangeEvent } from 'primereact/dropdown';
+import { Toast } from 'primereact/toast';
 
-import { SampleData } from './service/SampleData';
 import './home.scss'
 
-interface Print {
-    id: number;
-    name: string;
-    date: string | Date;
-    location: string;
-    paid: boolean;
-    status: boolean
-}
+import { IPrintOrder, PrintingOrder } from '@/app/(spso)/dashboard/const';
+import { searchDocName, searchPrinterOrder } from '@/app/api/spso/dashboard';
+import { getUserInfo } from '@/app/api/home/home';
+
 const HomePage = () => {
-    const [prints, setPrints] = useState<Print[]>([]);
+    const toast = useRef<Toast>(null);
+    const [PrintingOrder, setPrintingOrder] = useState<PrintingOrder[]>([]);
+    const [isPrintingOrderLoaded, setIsPrintingOrderLoaded] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [countSuccess, setCountSuccess] = useState(0);
+    const [extraPages, setExtraPages] = useState<number>(0);
+
     const [filters, setFilters] = useState<any>({
         global: { value: '', matchMode: FilterMatchMode.CONTAINS },
         name: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
@@ -38,23 +40,77 @@ const HomePage = () => {
     const [statuses] = useState<String[]>(['Đã in', 'Chưa in']);
     const [paids] = useState<String[]>(['Đã thanh toán', 'Chưa thanh toán']);
 
-    const getSeverity = (status: boolean) => {
+    const getSeverity = (status: string) => {
         switch (status) {
-            case true:
-                return 'success';
-
-            case false:
+            case 'PENDING':
                 return 'danger';
+            case 'PAID':
+                return 'success';
+            case 'SUCCESS':
+                return 'success';
+            default:
+                return 'warning';
         }
     };
 
     useEffect(() => {
-        SampleData.getFullData().then((data) => setPrints(getPrints(data)));
-    }, []);
+        const fetchData = async () => {
+            try {
+                const response = await searchPrinterOrder();
+                const userInfo = await getUserInfo();
+                setExtraPages(userInfo.data.extraPages);
+                if (response.data) {
+                    setPrintingOrder(response.data);
+                    let count = 0;
+                    response?.data?.forEach((p: PrintingOrder) => {
+                        if (p.printingStatus === 'SUCCESS') count++;
+                    })
+                    setCountSuccess(count);
+                }
+            } catch (error: any) {
+                const mes = error.message;
+                if (mes === "Request failed with status code 422") {
+                    toast.current?.show({
+                        severity: "error",
+                        summary: "Thất bại",
+                        detail: "Thông tin không hợp lệ",
+                        life: 3000,
+                    });
+                }
+                console.error("Error fetching groups:", error)
+            } finally {
+                setIsPrintingOrderLoaded(true);
+            }
+        }
 
-    const getPrints = (data: Print[]) => {
+        fetchData();
+    }, [])
+
+    useEffect(() => {
+        if (!isPrintingOrderLoaded) return;
+        const getDocName = async () => {
+            try {
+                for (const doc of PrintingOrder) {
+                    const response = await searchDocName(doc.documentId);
+                    doc.documentName = response.data.name;
+                }
+            } catch (error) {
+                console.error("Error fetching document names:", error);
+            } finally {
+                setIsLoading(true);
+            }
+        };
+
+        getDocName();
+    }, [isPrintingOrderLoaded, PrintingOrder]);
+
+    if (!isLoading) {
+        return <div>Loading data...</div>;
+    }
+
+    const getPrints = (data: PrintingOrder[]) => {
         return [...(data || [])].map((d) => {
-            d.date = new Date(d.date);
+            d.createdAt = new Date(d.createdAt);
             return d;
         })
     }
@@ -89,11 +145,11 @@ const HomePage = () => {
             showClear />;
     };
 
-    const statusItemTemplate = (option: boolean) => {
+    const statusItemTemplate = (option: string) => {
         return <Tag value={option} severity={getSeverity(option)} />;
     };
 
-    const paidItemTemplate = (option: boolean) => {
+    const paidItemTemplate = (option: string) => {
         return <Tag value={option} severity={getSeverity(option)} />;
     };
 
@@ -122,8 +178,8 @@ const HomePage = () => {
         );
     };
 
-    const dateBodyTemplate = (rowData: Print) => {
-        return formatDate(rowData.date);
+    const dateBodyTemplate = (rowData: PrintingOrder) => {
+        return formatDate(rowData.createdAt);
     };
 
     const dateFilterTemplate = (options: ColumnFilterElementTemplateOptions) => {
@@ -144,34 +200,29 @@ const HomePage = () => {
         );
     };
 
-    const statusBodyTemplate = (rowData: Print) => {
-        return <Tag value={rowData.status ? "Đã in" : "Chưa in"} severity={getSeverity(rowData.status)} />;
+    const statusBodyTemplate = (rowData: PrintingOrder) => {
+        return <Tag value={rowData.printingStatus} severity={getSeverity(rowData.printingStatus)} />;
     };
 
-    const paidBodyTemplate = (rowData: Print) => {
-        return <Tag value={rowData.paid ? "Đã thanh toán" : "Chưa thanh toán"} severity={getSeverity(rowData.paid)} />;
+    const paidBodyTemplate = (rowData: PrintingOrder) => {
+        return <Tag value={rowData.purchasingStatus} severity={getSeverity(rowData.purchasingStatus)} />;
     };
 
     const header = renderHeader();
 
     return (
         <div>
+            <Toast ref={toast}></Toast>
             <div className='grid'>
                 <div className='col-12 lg:col-6 xl:col-6'>
                     <Card>
                         <div className='flex justify-content-between'>
                             <div>
                                 <span className="block text-500 font-medium mb-3">Số bản in hoàn thành</span>
-                                <div className="text-900 font-medium text-xl">10</div>
+                                <div className="text-900 font-medium text-xl">{countSuccess}</div>
                             </div>
                             <Button icon="pi pi-clone" rounded text severity="help" size='large' />
                         </div>
-                        <p style={{
-                            color: 'white',
-                            fontSize: '14px',
-                            marginTop: '5px',
-                            fontStyle: 'italic'
-                        }}>Đã sử dụng 10</p>
                     </Card>
                 </div>
                 <div className='col-12 lg:col-6 xl:col-6'>
@@ -179,37 +230,31 @@ const HomePage = () => {
                         <div className='flex justify-content-between'>
                             <div>
                                 <span className="block text-500 font-medium mb-3">Số lượng A4</span>
-                                <div className="text-900 font-medium text-xl">50</div>
+                                <div className="text-900 font-medium text-xl">{extraPages}</div>
                             </div>
                             <div className="flex align-items-center justify-content-center border-round" style={{ width: '2.5rem', height: '2.5rem' }}>
                                 <i className="pi pi-clone text-purple-500 text-xl" />
                             </div>
                         </div>
-                        <p style={{
-                            fontSize: '14px',
-                            marginTop: '5px',
-                            fontStyle: 'italic',
-                            color: 'green'
-                        }}>Đã sử dụng 10</p>
                     </Card>
                 </div>
             </div>
 
             <div className="card">
-                <DataTable value={prints} paginator header={header} rows={10}
+                <DataTable value={PrintingOrder} paginator header={header} rows={10}
                     paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
                     rowsPerPageOptions={[10, 25, 50]} dataKey="id"
                     filters={filters} filterDisplay="menu" globalFilterFields={['name', 'status']}
                     emptyMessage="Không có bản in gần đây." currentPageReportTemplate="Hiển thị {first} tới {last} trên {totalRecords}">
                     <Column
-                        field="name"
+                        field="documentName"
                         header="Tên bản in"
                         sortable
                         // filter filterPlaceholder="Search by name" 
                         style={{ minWidth: '10rem' }}
                     />
                     <Column
-                        field="date"
+                        field="createdAt"
                         header="Ngày nhận"
                         sortable
                         filterField="date" dataType="date"
@@ -217,13 +262,6 @@ const HomePage = () => {
                         body={dateBodyTemplate}
                         // filter 
                         filterElement={dateFilterTemplate}
-                    />
-                    <Column
-                        field="location"
-                        header="Địa điểm nhận"
-                        sortable
-                        // filter filterPlaceholder="Search by name" 
-                        style={{ minWidth: '8rem' }}
                     />
                     <Column
                         header="Thanh toán"

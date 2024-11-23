@@ -21,7 +21,6 @@ import { IPrintOrder, PrintingOrder } from './const'
 
 export default function PrintOrder() {
     const toast = useRef<Toast>(null);
-    const [PrintOrder, setPrintOrder] = useState<IPrintOrder[]>([]);
     const [PrintingOrder, setPrintingOrder] = useState<PrintingOrder[]>([]);
     const [isPrintingOrderLoaded, setIsPrintingOrderLoaded] = useState(false);
     const [isLoading, setIsLoading] = useState(false);

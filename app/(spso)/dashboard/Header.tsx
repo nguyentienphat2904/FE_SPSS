@@ -7,10 +7,12 @@ import { searchPrinter } from '@/app/api/spso/printer'
 
 import { PrintingOrder } from './const'
 import { Printer } from '../printers/service/const'
+import { getFeedbackAndResponse } from '@/app/api/feedback/feedback'
 
 export default function Header() {
     const [printingOrder, setPrintingOrder] = useState<PrintingOrder[]>([])
     const [printer, setPrinter] = useState<Printer[]>([])
+    const [countFeedback, setCountFeedback] = useState<number>(0)
 
     useEffect(() => {
         const fetchData = async () => {
@@ -24,7 +26,22 @@ export default function Header() {
                 console.error("Error fetching groups:", mes)
             }
         }
+
+        const fetchFeedback = async () => {
+            try {
+                const feedback = await getFeedbackAndResponse();
+                let count = 0;
+                feedback?.forEach((f) => {
+                    if (!f.response) count++;
+                })
+                setCountFeedback(count);
+            } catch {
+
+            }
+        }
+
         fetchData();
+        fetchFeedback();
     }, [])
 
     useEffect(() => {
@@ -45,6 +62,7 @@ export default function Header() {
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
     };
+
 
     const countPaid = printingOrder.filter(item => item.printingStatus === "PENDING").length;
     const countPrinter = printer.filter(item => item.active === true).length;
@@ -90,7 +108,7 @@ export default function Header() {
             <Card title="Số phản hồi chưa xử lý">
                 <div className='flex justify-content-between'>
                     <div>
-                        <div className="text-900 font-medium text-xl text-red-500 font-bold font-italic">5</div>
+                        <div className="text-900 font-medium text-xl text-red-500 font-bold font-italic">{countFeedback}</div>
                     </div>
                     <div className="flex align-items-center justify-content-center border-round" style={{ width: '2.5rem', height: '2.5rem' }}>
                         <i className="pi pi-reply text-purple-500 text-xl" />
