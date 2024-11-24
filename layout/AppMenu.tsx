@@ -15,7 +15,6 @@ const AppMenu = () => {
     const router = useRouter();
     const userType = useSelector((state: RootState) => state.auth.userInfo?.type);
     const [showLoginMessage, setShowLoginMessage] = useState(false);
-    console.log(userType)
 
     const customerModel: AppMenuItem[] = [
         {

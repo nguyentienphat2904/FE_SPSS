@@ -1,10 +1,10 @@
 import { Metadata } from 'next';
 import Layout from '../../layout/layout';
+import { HandleRoleException } from '../role-exception';
 
 interface AppLayoutProps {
     children: React.ReactNode;
 }
-
 export const metadata: Metadata = {
     title: 'HCMUT Smart Printing Service',
     description: 'The ultimate collection of design-agnostic, flexible and accessible React UI Components.',
@@ -22,5 +22,5 @@ export const metadata: Metadata = {
 };
 
 export default function AppLayout({ children }: AppLayoutProps) {
-    return <Layout>{children}</Layout>;
+    return <Layout><HandleRoleException type='spso'>{children}</HandleRoleException></Layout>;
 }
