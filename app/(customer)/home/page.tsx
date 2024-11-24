@@ -2,25 +2,27 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Card } from 'primereact/card';
 import { Button } from 'primereact/button';
-import { DataTableFilterMeta } from 'primereact/datatable';
 import { FilterMatchMode, FilterOperator } from 'primereact/api';
 import { DataTable } from 'primereact/datatable';
 import { Column, ColumnFilterElementTemplateOptions } from 'primereact/column';
 import { InputText } from 'primereact/inputtext';
 import { Calendar } from 'primereact/calendar';
-import { ProgressBar } from 'primereact/progressbar';
 import { Slider, SliderChangeEvent } from 'primereact/slider';
 import { Tag } from 'primereact/tag';
 import { Dropdown, DropdownChangeEvent } from 'primereact/dropdown';
 import { Toast } from 'primereact/toast';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/redux/store';
 
 import './home.scss'
 
-import { IPrintOrder, PrintingOrder } from '@/app/(spso)/dashboard/const';
+import { PrintingOrder } from '@/app/(spso)/dashboard/const';
 import { searchDocName, searchPrinterOrder } from '@/app/api/spso/dashboard';
 import { getUserInfo } from '@/app/api/home/home';
 
 const HomePage = () => {
+    const userType = useSelector((state: RootState) => state.auth.userInfo?.type);
+
     const toast = useRef<Toast>(null);
     const [PrintingOrder, setPrintingOrder] = useState<PrintingOrder[]>([]);
     const [isPrintingOrderLoaded, setIsPrintingOrderLoaded] = useState(false);
@@ -104,9 +106,9 @@ const HomePage = () => {
         getDocName();
     }, [isPrintingOrderLoaded, PrintingOrder]);
 
-    if (!isLoading) {
-        return <div>Loading data...</div>;
-    }
+    if (userType === 'customer') {
+        if (!isLoading) return <div></div>
+    } else return <div>Không được phép truy cập.</div>
 
     const getPrints = (data: PrintingOrder[]) => {
         return [...(data || [])].map((d) => {

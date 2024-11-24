@@ -165,10 +165,14 @@ export default function PrintOrder() {
         switch (status) {
             case 'PENDING':
                 return 'danger';
+            case 'FAILED':
+                return 'danger';
             case 'PAID':
                 return 'success';
             case 'SUCCESS':
                 return 'success';
+            case 'PROCESSING':
+                return 'warning'
             default:
                 return 'warning';
         }

@@ -100,9 +100,9 @@ export default function Header() {
                     <div>
                         <div className="text-900 font-medium text-xl text-red-500 font-bold font-italic">{formatCurrency(100000)}</div>
                     </div>
-                    <div className="flex align-items-center justify-content-center border-round" style={{ width: '2.5rem', height: '2.5rem' }}>
+                    {/* <div className="flex align-items-center justify-content-center border-round" style={{ width: '2.5rem', height: '2.5rem' }}>
                         <i className="pi pi-wallet text-purple-500 text-xl" />
-                    </div>
+                    </div> */}
                 </div>
             </Card>
             <Card title="Số phản hồi chưa xử lý">
@@ -110,9 +110,9 @@ export default function Header() {
                     <div>
                         <div className="text-900 font-medium text-xl text-red-500 font-bold font-italic">{countFeedback}</div>
                     </div>
-                    <div className="flex align-items-center justify-content-center border-round" style={{ width: '2.5rem', height: '2.5rem' }}>
+                    {/* <div className="flex align-items-center justify-content-center border-round" style={{ width: '2.5rem', height: '2.5rem' }}>
                         <i className="pi pi-reply text-purple-500 text-xl" />
-                    </div>
+                    </div> */}
                 </div>
             </Card>
         </div>
