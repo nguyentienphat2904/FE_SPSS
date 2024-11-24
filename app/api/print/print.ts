@@ -35,7 +35,7 @@ export const deleteFile = async (id: string) => {
         );
         return response.data;
     } catch (error: any) {
-        throw error.message.data;
+        throw error.response.data;
     }
 }
 

@@ -1,5 +1,5 @@
 'use client'
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 
 import { Toast } from 'primereact/toast';
 import {
@@ -30,6 +30,22 @@ export default function PrintViewFile() {
     const fileUploadRef = useRef<FileUpload>(null);
     const fileRedux = useSelector((state: any) => state.print.file);
     const [notEnoughPage, setNotEnoughPage] = useState<boolean>(false);
+    const reset = useSelector((state: any) => state.print.reset);
+    const [trigger, setTrigger] = useState(false);
+
+    useEffect(() => {
+        if (reset) {
+            const file = fileUploadRef.current?.getFiles()[0];
+            const remove = (file: File, callback: Function) => {
+                setTotalSize(totalSize - file.size);
+                callback()
+            }
+            const callback = () => {
+                fileUploadRef.current?.clear(); // Xóa file khỏi danh sách
+            };
+            if (file) remove(file, callback)
+        }
+    }, [reset]);
 
     const onTemplateSelect = async (e: FileUploadSelectEvent) => {
         const files = e.files;
@@ -88,7 +104,7 @@ export default function PrintViewFile() {
 
     const headerTemplate = (options: FileUploadHeaderTemplateOptions) => {
         const { className, chooseButton, uploadButton, cancelButton } = options;
-        const value = totalSize / 10000;
+        const value = totalSize / 50000000;
         const formatedValue = fileUploadRef && fileUploadRef.current ? fileUploadRef.current.formatSize(totalSize) : '0 B';
 
         return (
