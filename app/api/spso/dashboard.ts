@@ -1,5 +1,6 @@
 import axios from "axios";
-import { BASE_URL, token } from "@/app/(spso)/dashboard/const";
+import { BASE_URL } from "@/app/(spso)/dashboard/const";
+import { getTokenFromCookie } from "@/utils/token";
 
 export const searchPrinterOrder = async () => {
     try {
@@ -9,7 +10,7 @@ export const searchPrinterOrder = async () => {
         }
         const response = await axios.post(`${BASE_URL}/printing_order/search`, body, {
             headers: {
-                Authorization: `Bearer ${token}`
+                Authorization: getTokenFromCookie()
             }
         })
         return response.data;
@@ -26,7 +27,7 @@ export const searchDocName = async (id: any) => {
         }
         const response = await axios.get(`${BASE_URL}/document/${id}`, {
             headers: {
-                Authorization: `Bearer ${token}`
+                Authorization: getTokenFromCookie()
             }
         })
         return response.data;

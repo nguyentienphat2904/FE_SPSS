@@ -139,4 +139,6 @@ export interface PrintingOrder {
     printerId: string,
     customerId: string,
     documentName: string,
+    createdAt: Date | string,
+    updatedAt: Date | string
 }

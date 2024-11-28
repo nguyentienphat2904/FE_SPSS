@@ -1,5 +1,6 @@
 import axios from 'axios'
-import { BASE_URL, token, CreatePrinter, UpdatePrinter, DeletePrinter, SearchPrinter } from '@/app/(spso)/printers/service/const'
+import { BASE_URL } from '@/app/(spso)/printers/service/const'
+import { getTokenFromCookie } from '@/utils/token'
 
 export const searchPrinter = async () => {
     try {
@@ -9,7 +10,7 @@ export const searchPrinter = async () => {
         }
         const response = await axios.post(`${BASE_URL}/printer/search`, body, {
             headers: {
-                Authorization: `Bearer ${token}`
+                Authorization: getTokenFromCookie()
             }
         })
         return response.data;
@@ -22,7 +23,7 @@ export const getLocation = async () => {
     try {
         const response = await axios.get(`${BASE_URL}/printer_location/`, {
             headers: {
-                Authorization: `Bearer ${token}`
+                Authorization: getTokenFromCookie()
             }
         })
         return response.data;
@@ -35,7 +36,7 @@ export const createPrinter = async (body: any) => {
     try {
         const response = await axios.post(`${BASE_URL}/printer/create`, body, {
             headers: {
-                Authorization: `Bearer ${token}`
+                Authorization: getTokenFromCookie()
             }
         })
         return response.data;
@@ -48,7 +49,7 @@ export const delPrinter = async (id: any) => {
     try {
         const response = await axios.delete(`${BASE_URL}/printer/delete/${id}`, {
             headers: {
-                Authorization: `Bearer ${token}`
+                Authorization: getTokenFromCookie()
             }
         })
         return response.data;
@@ -61,9 +62,9 @@ export const delPrinter = async (id: any) => {
 
 export const updatePrinter = async (id: any, body: any) => {
     try {
-        const response = await axios.patch(`${BASE_URL}/printer/update/${id}`, body, {
+        const response = await axios.put(`${BASE_URL}/printer/update/${id}`, body, {
             headers: {
-                Authorization: `Bearer ${token}`
+                Authorization: getTokenFromCookie()
             }
         })
     } catch (error) {

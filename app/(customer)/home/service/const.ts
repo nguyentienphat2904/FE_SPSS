@@ -1,0 +1,1 @@
+export const BASE_URL = 'https://spss.tiendungcorp.com.vn/v1'
