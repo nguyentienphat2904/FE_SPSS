@@ -3,6 +3,8 @@ import { baseURL, spsoToken } from "@/app/(spso)/spso_response/service/const";
 
 import { CRUResponseResponse, GetResponsesResponse } from "@/app/(spso)/spso_response/service/const";
 
+import { getTokenFromCookie } from "@/utils/token";
+
 async function createResponse(content: string, feedbackId: string): Promise<CRUResponseResponse> {
     try {
         const body = {
@@ -14,7 +16,7 @@ async function createResponse(content: string, feedbackId: string): Promise<CRUR
             body,
             {
                 headers: {
-                    Authorization: `Bearer ${spsoToken}`,
+                    Authorization: getTokenFromCookie(),
                 }
             }
         );
@@ -40,7 +42,7 @@ async function getResponses(): Promise<GetResponsesResponse> {
             body,
             {
                 headers: {
-                    Authorization: `Bearer ${spsoToken}`,
+                    Authorization: getTokenFromCookie(),
                 }
             }
         );
@@ -62,7 +64,7 @@ async function updateResponse(id: string, content: string): Promise<CRUResponseR
             body,
             {
                 headers: {
-                    Authorization: `Bearer ${spsoToken}`,
+                    Authorization: getTokenFromCookie(),
                 }
             }
         );
@@ -79,7 +81,7 @@ async function getResponseByFeedbackIdAndSPSOId(feedbackId: string, spsoId: stri
             `${baseURL}/feedback_response/search_by_feedback_id_and_spso_id`,
             {
                 headers: {
-                    Authorization: `Bearer ${spsoToken}`,
+                    Authorization: getTokenFromCookie(),
                 },
                 params: {
                     feedbackId: feedbackId,

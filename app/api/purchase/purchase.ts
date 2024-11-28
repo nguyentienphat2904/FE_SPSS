@@ -2,6 +2,7 @@ import axios from "axios";
 import { baseURL, token } from "@/app/(customer)/purchase/service/const";
 
 import { Purchase, CreatePurchaseResponse, GetPurchaseResponse } from "@/app/(customer)/purchase/service/const";
+import { getTokenFromCookie } from "@/utils/token";
 
 async function createPurchase(numPages: number): Promise<CreatePurchaseResponse> {
     try {
@@ -13,7 +14,7 @@ async function createPurchase(numPages: number): Promise<CreatePurchaseResponse>
             body,
             {
                 headers: {
-                    Authorization: `Bearer ${token}`,
+                    Authorization: getTokenFromCookie(),
                 },
             }
         );
@@ -39,7 +40,7 @@ async function getPurchase(): Promise<GetPurchaseResponse> {
             body,
             {
                 headers: {
-                    Authorization: `Bearer ${token}`,
+                    Authorization: getTokenFromCookie(),
                 },
             }
         );

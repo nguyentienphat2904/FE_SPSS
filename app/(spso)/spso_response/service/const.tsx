@@ -9,7 +9,7 @@ export interface IResponse {
     content: string;
     createdAt: Date | string;
     updatedAt: Date | string;
-    feedback: Feedback;
+    feedback: Feedback | null;
 }
 
 export interface CRUResponseResponse {

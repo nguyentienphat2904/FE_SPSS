@@ -9,9 +9,10 @@ import { Calendar } from 'primereact/calendar'
 import { Checkbox } from 'primereact/checkbox'
 import { InputTextarea } from 'primereact/inputtextarea'
 
-import { sizes, orientations, places } from './const'
+import { sizes, orientations, places, PrinterShow } from './const'
 
 import { adjustReset, adjustAmount, adjustDate, adjustNote, adjustOneSide, adjustOrient, adjustRange, adjustPlace, adjustPrintColor, adjustSize } from '@/redux/print.slice'
+import { getPlace } from '@/app/api/print/print';
 
 export default function PrintConfig() {
 
@@ -27,6 +28,20 @@ export default function PrintConfig() {
     const [oneSide, setOneSide] = useState(useSelector((state: any) => state.print.oneSide));
     const [printColor, setPrintColor] = useState(useSelector((state: any) => state.print.printColor));
     const [note, setNote] = useState(useSelector((state: any) => state.print.note));
+
+    const [placeList, setPlaceList] = useState<PrinterShow[]>([]);
+
+    useEffect(() => {
+        const fetchPlace = async () => {
+            try {
+                const response = await getPlace();
+                setPlaceList(response);
+            } catch (error) {
+                console.error(error);
+            }
+        }
+        fetchPlace();
+    }, []);
 
     useEffect(() => {
         if (reset) {
@@ -55,13 +70,6 @@ export default function PrintConfig() {
                         }} />
                 </div>
                 <div className="flex flex-column gap-2">
-                    <label htmlFor="range">Trang in</label>
-                    <InputText required placeholder='Chọn các trang in' id="range" value={range} onChange={(e) => {
-                        setRange(e.target.value);
-                        dispatch(adjustRange(e.target.value));
-                    }} />
-                </div>
-                <div className="flex flex-column gap-2">
                     <label htmlFor="size">Khổ giấy</label>
                     <Dropdown id='size' options={sizes} placeholder='Chọn khổ giấy' value={size} onChange={(e) => {
                         setSize(e.value);
@@ -77,17 +85,10 @@ export default function PrintConfig() {
                 </div>
                 <div className="flex flex-column gap-2">
                     <label htmlFor="place">Nơi nhận</label>
-                    <Dropdown id="place" options={places} placeholder='Chọn nơi nhận' value={place} onChange={(e) => {
+                    <Dropdown id="place" options={placeList} placeholder='Chọn nơi nhận' value={place} optionLabel='name' onChange={(e) => {
                         setPlace(e.value);
                         dispatch(adjustPlace(e.value));
                     }}></Dropdown>
-                </div>
-                <div className="flex flex-column gap-2">
-                    <label htmlFor="date">Ngày nhận</label>
-                    <Calendar id="date" placeholder='Chọn ngày nhận' value={date} showButtonBar showTime hourFormat="12" onChange={(e: any) => {
-                        setDate(e.value);
-                        dispatch(adjustDate(format(e.value, 'MM/dd/yyyy hh:mm a')));
-                    }}></Calendar>
                 </div>
                 <div className="flex flex-column">
                     <div className="checkbox-group">
@@ -99,24 +100,7 @@ export default function PrintConfig() {
                     </div>
                     <div className="print-label-second">Mặc định in 2 mặt</div>
                 </div>
-                <div className="flex flex-column">
-                    <div className="checkbox-group">
-                        <Checkbox inputId="color" value="1 page" checked={printColor} onChange={() => {
-                            setPrintColor((prev: boolean) => !prev);
-                            dispatch(adjustPrintColor());
-                        }} />
-                        <label htmlFor="color" className="ml-2">In màu</label>
-                    </div>
-                    <div className="print-label-second">Tuỳ chọn</div>
-                </div>
             </div >
-            <div className="flex flex-column gap-2">
-                <label htmlFor="note">Ghi chú</label>
-                <InputTextarea placeholder='Ghi chú' autoResize value={note} onChange={(e) => {
-                    setNote(e.target.value);
-                    dispatch(adjustNote(e.target.value));
-                }}></InputTextarea>
-            </div>
         </div >
     )
 }

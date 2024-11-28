@@ -14,3 +14,39 @@ export const fileTypes = [
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     'text/csv'
 ];
+
+export const baseUrl = 'https://spss.tiendungcorp.com.vn/v1';
+
+export interface FileData {
+    id: string;
+    name: string;
+    mimeType: string;
+    numPages: number,
+    path: string,
+    customerId: string,
+    createdAt: Date | string,
+    updatedAt: Date | string
+}
+
+export interface PrinterResponse {
+    id: string,
+    name: string,
+    brand: string,
+    active: boolean,
+    locationId: string,
+    createdAt: Date | string,
+    updatedAt: Date | string,
+    location: {
+        id: string,
+        branch: string,
+        block: string,
+        room: string,
+        createdAt: Date | string,
+        updatedAt: Date | string
+    }
+}
+
+export interface PrinterShow {
+    id: string,
+    name: string // name + location.branch + location.block + location.room
+}

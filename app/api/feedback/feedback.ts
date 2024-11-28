@@ -4,6 +4,8 @@ import { baseURL, Feedback, token } from "@/app/(customer)/response/service/cons
 import { CRUFeedbackResponse, GetFeedbacksResponse } from "@/app/(customer)/response/service/const";
 import { IResponse } from "@/app/(spso)/spso_response/service/const";
 
+import { getTokenFromCookie } from "@/utils/token";
+
 async function createFeedback(content: string): Promise<CRUFeedbackResponse> {
     try {
         const body = {
@@ -14,7 +16,7 @@ async function createFeedback(content: string): Promise<CRUFeedbackResponse> {
             body,
             {
                 headers: {
-                    Authorization: `Bearer ${token}`,
+                    Authorization: getTokenFromCookie(),
                 }
             }
         );
@@ -40,7 +42,7 @@ async function getFeedbacks(): Promise<GetFeedbacksResponse> {
             body,
             {
                 headers: {
-                    Authorization: `Bearer ${token}`,
+                    Authorization: getTokenFromCookie(),
                 }
             }
         );
@@ -67,7 +69,7 @@ async function getFeedbackAndResponse(): Promise<Feedback[]> {
             body,
             {
                 headers: {
-                    Authorization: `Bearer ${token}`,
+                    Authorization: getTokenFromCookie(),
                 }
             }
         );
@@ -76,7 +78,7 @@ async function getFeedbackAndResponse(): Promise<Feedback[]> {
             body,
             {
                 headers: {
-                    Authorization: `Bearer ${token}`,
+                    Authorization: getTokenFromCookie(),
                 }
             }
         );
@@ -85,7 +87,7 @@ async function getFeedbackAndResponse(): Promise<Feedback[]> {
         const responseList = response.data.data;
         const feedbackWithResponse = feedbackList.map((feedback: Feedback) => {
             const responseOfFeedback = responseList.find(
-                (response: IResponse) => response.feedback.id === feedback.id
+                (response: IResponse) => response.feedbackId === feedback.id
             );
             return {
                 ...feedback,
@@ -109,7 +111,7 @@ async function updateFeedback(id: string, content: string): Promise<CRUFeedbackR
             body,
             {
                 headers: {
-                    Authorization: `Bearer ${token}`,
+                    Authorization: getTokenFromCookie(),
                 }
             }
         );
@@ -125,7 +127,7 @@ async function getFeedbackByID(id: string): Promise<CRUFeedbackResponse> {
             `${baseURL}/feedback/search/${id}`,
             {
                 headers: {
-                    Authorization: `Bearer ${token}`,
+                    Authorization: getTokenFromCookie(),
                 }
             }
         );

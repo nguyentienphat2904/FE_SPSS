@@ -1,10 +1,12 @@
 'use client'
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 
 import { Toast } from 'primereact/toast';
 import {
     FileUpload,
+    FileUploadHandlerEvent,
     FileUploadHeaderTemplateOptions,
+    FileUploadProps,
     FileUploadSelectEvent,
     FileUploadUploadEvent,
     ItemTemplateOptions
@@ -12,17 +14,59 @@ import {
 import { ProgressBar } from 'primereact/progressbar';
 import { Tag } from 'primereact/tag';
 import { Button } from 'primereact/button';
+import { Dialog } from 'primereact/dialog';
 
-import PDFViewer from './PDFViewer';
+import Link from 'next/link';
+
+import { useDispatch, useSelector } from 'react-redux';
+import { setFile } from '@/redux/print.slice';
+import { deleteFile, getUserInfo, uploadFile } from '@/app/api/print/print';
 
 export default function PrintViewFile() {
 
+    const dispatch = useDispatch();
     const toast = useRef<Toast>(null);
     const [totalSize, setTotalSize] = useState(0);
     const fileUploadRef = useRef<FileUpload>(null);
+    const fileRedux = useSelector((state: any) => state.print.file);
+    const [notEnoughPage, setNotEnoughPage] = useState<boolean>(false);
+    const reset = useSelector((state: any) => state.print.reset);
+    const [trigger, setTrigger] = useState(false);
 
-    const onTemplateSelect = (e: FileUploadSelectEvent) => {
-        let files = e.files;
+    useEffect(() => {
+        if (reset) {
+            const file = fileUploadRef.current?.getFiles()[0];
+            const remove = (file: File, callback: Function) => {
+                setTotalSize(totalSize - file.size);
+                callback()
+            }
+            const callback = () => {
+                fileUploadRef.current?.clear(); // Xóa file khỏi danh sách
+            };
+            if (file) remove(file, callback)
+        }
+    }, [reset]);
+
+    const onTemplateSelect = async (e: FileUploadSelectEvent) => {
+        const files = e.files;
+        try {
+            const selectedFile = e.files[0] as File;
+            if (selectedFile.type === 'application/pdf') {
+                const response = await uploadFile(selectedFile);
+                const userInfo = await getUserInfo();
+                if (response.data[0].numPages > userInfo.data.extraPages) {
+                    console.log(response.data[0].numPages);
+                    const deleteFileResponse = await deleteFile(response.data[0].id);
+                    setNotEnoughPage(true);
+                    return;
+                }
+
+                dispatch(setFile(response.data[0]));
+                toast.current?.show({ severity: 'success', summary: 'Thành công', detail: response.message });
+            }
+        } catch (error: any) {
+            toast.current?.show({ severity: 'error', summary: 'Lỗi', detail: error.message });
+        }
 
         setTotalSize(files[0] ? files[0].size : 0);
     }
@@ -38,9 +82,20 @@ export default function PrintViewFile() {
         toast.current?.show({ severity: 'info', summary: 'Success', detail: 'File Uploaded' });
     }
 
-    const onTemplateRemove = (file: File, callback: Function) => {
-        setTotalSize(totalSize - file.size);
-        callback();
+    const onTemplateRemove = async (file: File, callback: Function) => {
+        try {
+            if (fileRedux) {
+                const response = await deleteFile(fileRedux.id);
+                if (response.success) {
+                    dispatch(setFile(null));
+                }
+                toast.current?.show({ severity: 'success', summary: 'Thành công', detail: response.message });
+                setTotalSize(totalSize - file.size);
+                callback();
+            }
+        } catch (error: any) {
+            toast.current?.show({ severity: 'error', summary: 'Lỗi', detail: error.message });
+        }
     };
 
     const onTemplateClear = () => {
@@ -49,7 +104,7 @@ export default function PrintViewFile() {
 
     const headerTemplate = (options: FileUploadHeaderTemplateOptions) => {
         const { className, chooseButton, uploadButton, cancelButton } = options;
-        const value = totalSize / 10000;
+        const value = totalSize / 50000000;
         const formatedValue = fileUploadRef && fileUploadRef.current ? fileUploadRef.current.formatSize(totalSize) : '0 B';
 
         return (
@@ -58,7 +113,7 @@ export default function PrintViewFile() {
                 {uploadButton}
                 {cancelButton}
                 <div className="flex align-items-center gap-3 ml-auto">
-                    <span>{formatedValue} / 1 MB</span>
+                    <span>{formatedValue} / 50 MB</span>
                     <ProgressBar value={value} showValue={false} style={{ width: '10rem', height: '12px' }}></ProgressBar>
                 </div>
             </div>
@@ -67,6 +122,8 @@ export default function PrintViewFile() {
 
     const itemTemplate = (inFile: object, props: ItemTemplateOptions) => {
         const file = inFile as File;
+
+        if (file.type !== 'application/pdf') return (<></>);
 
         return (
             <div className="flex align-items-center flex-wrap">
@@ -94,6 +151,15 @@ export default function PrintViewFile() {
         );
     };
 
+    const notEnoughPageFooter = (
+        <div>
+            <Button label='Huỷ' outlined severity='danger' onClick={() => setNotEnoughPage(false)}></Button>
+            <Link href='/purchase'>
+                <Button label='Chuyển' severity='info'></Button>
+            </Link>
+        </div>
+    );
+
     const chooseOptions = { icon: 'pi pi-fw pi-file', iconOnly: true, className: 'custom-choose-btn p-button-rounded p-button-outlined' };
     const uploadOptions = { icon: 'pi pi-fw pi-cloud-upload', iconOnly: true, className: 'hidden' };
     const cancelOptions = { icon: 'pi pi-fw pi-times', iconOnly: true, className: 'hidden' };
@@ -102,11 +168,23 @@ export default function PrintViewFile() {
         <div className='print-file-upload-box'>
             <Toast ref={toast}></Toast>
 
-            <FileUpload className='w-full h-full' ref={fileUploadRef} name="demo[]" url="/api/upload" multiple={false} maxFileSize={1000000}
-                onUpload={onTemplateUpload} onSelect={onTemplateSelect} onError={onTemplateClear} onClear={onTemplateClear}
+            <FileUpload className='w-full h-full' name="pdfFile" accept="application/pdf"
+                ref={fileUploadRef} multiple={false} maxFileSize={50000000}
+                onSelect={onTemplateSelect} onError={onTemplateClear} onClear={onTemplateClear}
                 headerTemplate={headerTemplate} itemTemplate={itemTemplate} emptyTemplate={emptyTemplate}
                 chooseOptions={chooseOptions} uploadOptions={uploadOptions} cancelOptions={cancelOptions} />
-            {/* <PDFViewer url={"https://pdfobject.com/pdf/sample.pdf"}></PDFViewer> */}
+            <Dialog header={'Không đủ giấy'} visible={notEnoughPage} onHide={() => setNotEnoughPage(false)}
+                footer={notEnoughPageFooter} style={{ width: '50vw' }} breakpoints={{ '960px': '75vw', '641px': '100vw' }}>
+                <div className="print-confirmation-content">
+                    <i
+                        className="pi pi-exclamation-triangle mr-3"
+                        style={{ fontSize: "2rem" }}
+                    ></i>
+                    <span>
+                        Không có đủ giấy in! <br />Chuyển hướng đến trang mua giấy in?
+                    </span>
+                </div>
+            </Dialog>
         </div>
     )
 }
