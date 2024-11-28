@@ -1,3 +1,14 @@
+.header-left, .header-right {
+    margin-bottom: 10px;
+}
+
+.custom-choose-btn, .custom-upload-btn, .custom-cancel-btn {
+    padding: 16px;
+    height: 10px;
+    width: 10px;
+    margin-right: 2px;
+}
+
 @media (min-width: 713px) {
     .header {
         display: flex;
@@ -5,12 +16,18 @@
         align-items: center;
     }
 
-    .header-left {
-        white-space: nowrap;
-    }
-
     .header-right input {
         width: 300px;
+    }
+
+    .popup-info {
+        display: flex;
+        justify-content:  space-between;
+        align-items: center
+    }
+
+    .popup-info-left, .popup-info-right {
+        width: 49%;
     }
 }
 
@@ -38,5 +55,4 @@
 }
 
 @media (max-width: 240px) {
-    .header {}
 }

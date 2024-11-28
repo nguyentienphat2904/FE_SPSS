@@ -1,0 +1,33 @@
+.dashboard-header {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: repeat(4, 1fr);
+
+    .p-button {
+        margin-top: 5px;
+        padding: 0;
+    }
+
+    .p-button-success {
+        color: green;
+    }
+}
+
+@media (max-width: 1024px) {
+    .dashboard-header {
+        grid-template-columns: repeat(2, 1fr);
+        // grid-template-rows: repeat(2, auto);
+    }
+}
+
+@media (max-width: 768px) {
+    .dashboard-header {
+        grid-template-columns: 1fr;
+        grid-template-rows: repeat(4, auto);
+    }
+}
+
+.p-card-title {
+    color: var(--primary-color);
+    font-size: large;
+}

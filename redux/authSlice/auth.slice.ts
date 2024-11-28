@@ -1,4 +1,4 @@
-import { UserOperation } from '@/service/userService';
+import { UserOperation } from '@/app/api/user';
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { setTokenInCookie, getTokenFromCookie, removeTokenFromCookie } from '@/utils/token';
 import { getRoleFromCookie, removeRoleFromCookie, setRoleInCookie } from '@/utils/role';

@@ -1,5 +1,5 @@
 "use client"
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Button } from 'primereact/button';
 import { FilterMatchMode, FilterOperator } from 'primereact/api';
 import { DataTable } from 'primereact/datatable';
@@ -12,45 +12,59 @@ import './styles/response.scss'
 import { SampleData } from './service/SampleData';
 import { Dropdown, DropdownChangeEvent } from 'primereact/dropdown';
 import { Tag } from 'primereact/tag';
+import { Toast } from 'primereact/toast';
 
-interface ResponseType {
-    id: number;
-    title: string;
-    date: string | Date;
-    detail: string;
-    reply: string | null;
-}
+import { IResponse } from './service/const';
+import { getResponses, createResponse, updateResponse, getResponseByFeedbackIdAndSPSOId } from '@/app/api/response/response';
+import { getFeedbackAndResponse, getFeedbacks } from '@/app/api/feedback/feedback';
+import { Feedback } from '@/app/(customer)/response/service/const';
 
 export default function SPSOResponsePage() {
-    const [prints, setPrints] = useState<ResponseType[]>([]);
+    const [prints, setPrints] = useState<Feedback[]>([]);
     const [globalFilterValue, setGlobalFilterValue] = useState<string>('');
     const [reply] = useState<String[]>(['Đã trả lời', 'Chưa trả lời']);
     const [replyInput, setReplyInput] = useState<string>('');
     const [displayDetailDialog, setDisplayDetailDialog] = useState<boolean>(false);
-    const [selectedDetail, setSelectedDetail] = useState<ResponseType | null>(null);
+    const [selectedDetail, setSelectedDetail] = useState<Feedback | null>(null);
     const [filters, setFilters] = useState<any>({
         global: { value: '', matchMode: FilterMatchMode.CONTAINS },
-        number: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-        date: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+        customerId: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.CONTAINS }] },
+        createdAt: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.CONTAINS }] },
     });
+    const [response, setResponse] = useState<IResponse | null>(null);
 
-    const getReplyStatus = (reply: boolean) => {
+    const toast = useRef<Toast | null>(null);
+
+    const getReplyStatus = (reply: boolean | IResponse | null) => {
         switch (reply) {
-            case true:
-                return 'success';
-
-            case false:
+            case null:
                 return 'danger';
+
+            default:
+                return 'success';
         }
     };
 
     useEffect(() => {
-        SampleData.getFullData().then((data) => setPrints(getPrints(data)));
+        // SampleData.getFullData().then((data) => setPrints(getPrints(data)));
+        const getResponseList = async () => {
+            try {
+                const response = await getFeedbackAndResponse();
+                setPrints(response);
+            } catch (error: any) {
+                toast.current?.show({
+                    severity: 'error',
+                    summary: 'Lỗi',
+                    detail: error.message,
+                });
+            }
+        }
+        getResponseList();
     }, []);
 
-    const getPrints = (data: ResponseType[]) => {
+    const getPrints = (data: Feedback[]) => {
         return [...(data || [])].map((d) => {
-            d.date = new Date(d.date);
+            d.createdAt = new Date(d.createdAt);
             return d;
         });
     };
@@ -78,8 +92,8 @@ export default function SPSOResponsePage() {
         return <Tag value={option} severity={getReplyStatus(option)} />;
     };
 
-    const replyBodyTemplate = (rowData: ResponseType) => {
-        return <Tag value={rowData.reply ? "Đã trả lời" : "Chưa trả lời"} severity={getReplyStatus(!!rowData.reply)} />;
+    const replyBodyTemplate = (rowData: Feedback) => {
+        return <Tag value={rowData.response ? "Đã trả lời" : "Chưa trả lời"} severity={getReplyStatus(rowData.response)} />;
     };
 
     const onGlobalFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -116,8 +130,8 @@ export default function SPSOResponsePage() {
         );
     };
 
-    const dateBodyTemplate = (rowData: ResponseType) => {
-        return formatDate(rowData.date);
+    const dateBodyTemplate = (rowData: Feedback) => {
+        return formatDate(rowData.createdAt);
     };
 
     const dateFilterTemplate = (options: ColumnFilterElementTemplateOptions) => {
@@ -126,14 +140,48 @@ export default function SPSOResponsePage() {
             dateFormat="mm/dd/yy" placeholder="mm/dd/yyyy" mask="99/99/9999" />;
     };
 
-    const handleConfirm = (): void => {
-        console.log(`Tiêu đề của phản hồi: ${selectedDetail?.title}`);
-        console.log(`Nội dung của phản hồi: ${selectedDetail?.detail}`);
+    const handleConfirm = async () => {
+        // console.log(`Tiêu đề của phản hồi: ${selectedDetail?.title}`);
+        // console.log(`Nội dung của phản hồi: ${selectedDetail?.content}`);
+        try {
+            const response = await createResponse(replyInput, selectedDetail?.id || '');
+            toast.current?.show({
+                severity: 'success',
+                summary: 'Thành công',
+                detail: response.message,
+            });
+            const updateFeedbackList = prints.map((feedback: Feedback) => {
+                if (feedback.id === response.data.feedbackId) {
+                    return {
+                        ...feedback,
+                        response: response.data
+                    }
+                }
+                return feedback;
+            });
+            setPrints([...updateFeedbackList]);
+            setDisplayDetailDialog(false);
+        } catch (error: any) {
+            toast.current?.show({
+                severity: 'error',
+                summary: 'Lỗi',
+                detail: error.message,
+            });
+        }
     };
 
-    const openDetailDialog = (rowData: ResponseType): void => {
-        setSelectedDetail(rowData);
-        setDisplayDetailDialog(true);
+    const openDetailDialog = async (rowData: Feedback) => {
+        try {
+            setSelectedDetail(rowData);
+            setDisplayDetailDialog(true);
+            setResponse(rowData.response);
+        } catch (error: any) {
+            toast.current?.show({
+                severity: 'error',
+                summary: 'Lỗi',
+                detail: error.message,
+            });
+        }
     };
 
     const closeDetailDialog = (): void => {
@@ -143,23 +191,25 @@ export default function SPSOResponsePage() {
     };
 
     const header = renderHeader();
-
     return (
         <div>
+            <Toast ref={toast}></Toast>
             <div className="card">
                 {header}
                 <DataTable value={prints} paginator rows={10}
                     paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-                    rowsPerPageOptions={[10, 25, 50]} dataKey="id"
-                    filters={filters} filterDisplay="menu" globalFilterFields={['number', 'date']}
-                    emptyMessage="Không có phản hồi gần đây." currentPageReportTemplate="">
-                    <Column field="title" header="Tiêu đề" sortable filterPlaceholder="Search by string" style={{ minWidth: '6rem' }} />
-                    <Column field="date" header="Thời gian tạo" sortable filterField="date" dataType="date" style={{ minWidth: '12rem' }} body={dateBodyTemplate} filterElement={dateFilterTemplate} />
+                    rowsPerPageOptions={[10, 25, 50]}
+                    filters={filters} filterDisplay="menu" globalFilterFields={['createdAt', 'customerId']}
+                    emptyMessage="Không có phản hồi gần đây." currentPageReportTemplate=""
+                    scrollable scrollHeight='500px' removableSort>
+                    {/*<Column field="title" header="Tiêu đề" sortable filterPlaceholder="Search by string" style={{ minWidth: '6rem' }} />*/}
+                    <Column field="createdAt" header="Thời gian tạo" sortable filterField="createdAt" dataType="date" style={{ minWidth: '12rem' }} body={dateBodyTemplate} filterElement={dateFilterTemplate} />
+                    <Column field="customerId" header="Mã người dùng" sortable />
                     <Column header="Tình trạng" sortable filterMenuStyle={{ width: '14rem' }} style={{ minWidth: '12rem' }} body={replyBodyTemplate} filterElement={replyFilterTemplate} />
                     <Column
                         header="Chi tiết phản hồi"
                         alignHeader='right'
-                        body={(rowData: ResponseType) => (
+                        body={(rowData: Feedback) => (
                             <Button label="Chi tiết" onClick={() => openDetailDialog(rowData)} />
                         )}
                         style={{ textAlign: 'end' }}
@@ -172,16 +222,42 @@ export default function SPSOResponsePage() {
                 visible={displayDetailDialog}
                 onHide={closeDetailDialog}
                 style={{
-                    width: '400px',
+                    minWidth: '50vw',
+                    maxWidth: '75vw'
                 }}
             >
-                <p><strong>Tiêu đề:</strong> {selectedDetail?.title}</p>
-                <p><strong>Thời gian tạo:</strong> {selectedDetail ? formatDate(selectedDetail.date) : ''}</p>
-                <p><strong>Phản hồi:</strong> {selectedDetail?.detail}</p>
+                {/* <p><strong>Tiêu đề:</strong> {selectedDetail?.title}</p> */}
+                <p><strong>Thời gian tạo:</strong> {selectedDetail ? formatDate(selectedDetail.createdAt) : ''}</p>
+                <p><strong>Mã khách hàng:</strong> {selectedDetail?.customerId || 'N/A'}</p>
+                <p>
+                    <strong>Chi tiết:</strong>
+                    <br />
+                    {selectedDetail?.content
+                        ? selectedDetail?.content.split('\n').map((line, index) => (
+                            <React.Fragment key={index}>
+                                {line}
+                                <br />
+                            </React.Fragment>
+                        ))
+                        : 'N/A'}
+                </p>
                 <p style={{ borderTop: '1px solid #e0e0e0', paddingTop: '8px' }}><strong>Trả lời:</strong></p>
-                <p className='text-center'>{selectedDetail?.reply}</p>
+                <p><strong>Thời gian tạo:</strong> {response ? formatDate(response.createdAt) : 'N/A'}</p>
+                <p><strong>SPSO ID:</strong> {response?.spsoId || 'N/A'}</p>
+                <p>
+                    <strong>Nội dung:</strong>
+                    <br />
+                    {response?.content
+                        ? response.content.split('\n').map((line, index) => (
+                            <React.Fragment key={index}>
+                                {line}
+                                <br />
+                            </React.Fragment>
+                        ))
+                        : 'N/A'}
+                </p>
 
-                {!selectedDetail?.reply && selectedDetail &&
+                {!response &&
                     <>
                         <InputTextarea value={replyInput} onChange={(e) => { setReplyInput(e.target.value) }} className='mb-3 w-full' autoResize rows={10} />
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -204,6 +280,6 @@ export default function SPSOResponsePage() {
                     </>
                 }
             </Dialog>
-        </div>
+        </div >
     );
 }

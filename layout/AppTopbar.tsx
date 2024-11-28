@@ -61,11 +61,11 @@ const AppTopbar = forwardRef<AppTopbarRef>((props, ref) => {
             <div ref={topbarmenuRef} className={classNames('layout-topbar-menu', { 'layout-topbar-menu-mobile-active': layoutState.profileSidebarVisible })}>
                 <button type="button" className="p-link layout-topbar-button" onClick={(e) => { op.current ? op.current.toggle(e) : null }}>
                     <i className="pi pi-user"></i>
-                    <span>Profile</span>
+                    <span></span>
                 </button>
             </div>
 
-            <OverlayPanel ref={op} className="overlay-panel" style={{ marginLeft: '7px' }}>
+            <OverlayPanel ref={op} className="overlay-panel">
                 <button type="button" className="p-link layout-topbar-button" onClick={handleLogout}>
                     <i className="pi pi-sign-out" style={{ marginRight: '8px' }} />
                     <span>Đăng xuất</span>

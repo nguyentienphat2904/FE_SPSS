@@ -5,6 +5,12 @@
 
     .p-card-title {
         color: var(--primary-color);
+        font-size: xx-large;
+        font-style: italic;
+    }
+
+    .p-card-body {
+        padding: 0px;
     }
 }
 
@@ -41,9 +47,9 @@
 
 .print-footer {
     display: flex;
-    flex-direction: row;
+    flex-direction: flex;
     gap: 8px;
-    justify-content: end;
+    justify-content: flex-end;
 }
 
 .print-dialog {
@@ -58,6 +64,8 @@
 
 .print-file-upload-box {
     min-height: 50vh;
+    display: flex;
+    flex-direction: column;
 }
 
 .print-confirm-data {
