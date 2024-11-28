@@ -2,6 +2,7 @@ import axios from "axios";
 import { baseUrl, PrinterResponse, PrinterShow } from "@/app/(customer)/print/const";
 import Body from "@/app/(spso)/dashboard/Body";
 import { getTokenFromCookie } from "@/utils/token";
+import { blob } from "stream/consumers";
 
 export const uploadFile = async (file: File) => {
     const formData = new FormData();
@@ -117,6 +118,43 @@ export const createPrintOrder = async (numFaces: number, orientation: string, si
                 headers: {
                     Authorization: getTokenFromCookie()
                 }
+            }
+        );
+        return response.data;
+    } catch (error: any) {
+        throw error.response.data;
+    }
+}
+
+export const downloadPrintOrder = async (id: string) => {
+    try {
+        const response = await axios.get(
+            `${baseUrl}/document/download/${id}`,
+            {
+                headers: {
+                    Authorization: getTokenFromCookie()
+                },
+                responseType: 'blob'
+            }
+        );
+        return response;
+    } catch (error: any) {
+        throw error.response.data;
+    }
+}
+
+export const confirmStatus = async (id: string, status: string) => {
+    try {
+        const response = await axios.get(
+            `${baseUrl}/printing_order/confirm_status`,
+            {
+                headers: {
+                    Authorization: getTokenFromCookie()
+                },
+                params: {
+                    id,
+                    status,
+                },
             }
         );
         return response.data;

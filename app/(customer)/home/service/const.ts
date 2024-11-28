@@ -1,1 +1,1 @@
-export const BASE_URL = 'https://spss.tiendungcorp.com.vn/v1'
+export const BASE_URL = 'http://localhost:3010/v1'

@@ -18,6 +18,7 @@ import { Button } from 'primereact/button'
 import { searchDocName, searchPrinterOrder } from '@/app/api/spso/dashboard'
 
 import { IPrintOrder, PrintingOrder } from './const'
+import { confirmStatus, downloadPrintOrder } from '@/app/api/print/print'
 
 export default function PrintOrder() {
     const toast = useRef<Toast>(null);
@@ -44,6 +45,9 @@ export default function PrintOrder() {
     const [detailVisible, setDetailVisible] = useState<boolean>(false);
 
     const [detail, setDetail] = useState<any>();
+
+    const [confirmPrintDialog, setConfirmPrintDialog] = useState<boolean>(false);
+    const [printOrder, setPrintOrder] = useState<PrintingOrder | null>(null);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -190,10 +194,75 @@ export default function PrintOrder() {
         );
     }
 
+    const downloadFile = async (rowData: PrintingOrder) => {
+        try {
+            const documentId = rowData.documentId;
+            const response = await downloadPrintOrder(documentId);
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `${rowData.documentName}.pdf`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            toast.current?.show({
+                severity: "success",
+                summary: "Thành công",
+                detail: "Tải thành công",
+                life: 3000,
+            });
+            const confirmProcessing = await confirmStatus(rowData.id, 'PROCESSING');
+            const updatedOrders = PrintingOrder.map((order) =>
+                order.id === confirmProcessing.data.id ? { ...order, printingStatus: 'PROCESSING' } : order
+            );
+            setPrintingOrder([...updatedOrders]);
+        } catch (error: any) {
+            toast.current?.show({
+                severity: "error",
+                summary: "Thất bại",
+                detail: error.message,
+                life: 3000,
+            });
+        }
+    }
+
+    const confirmPrint = async () => {
+        try {
+            const confirmPrint = await confirmStatus(printOrder?.id || '', 'SUCCESS');
+            toast.current?.show({
+                severity: "success",
+                summary: "Thành công",
+                detail: confirmPrint.message,
+                life: 3000,
+            });
+            const updatedOrders = PrintingOrder.map((order) =>
+                order.id === confirmPrint.data.id ? { ...order, printingStatus: 'SUCCESS' } : order
+            );
+            setPrintingOrder([...updatedOrders]);
+            setConfirmPrintDialog(false);
+        } catch (error: any) {
+            toast.current?.show({
+                severity: "error",
+                summary: "Thất bại",
+                detail: error.message,
+                life: 3000,
+            });
+        }
+    }
+
     const renderAction = (rowData: PrintingOrder) => {
         if (rowData.printingStatus === 'PENDING')
             return (
-                <Button size='small' icon='pi pi-print' text rounded></Button>
+                <Button size='small' icon='pi pi-print' text rounded onClick={() => downloadFile(rowData)}></Button>
+            );
+        else if (rowData.printingStatus === 'PROCESSING')
+            return (
+                <Button size='small' icon='pi pi-check' text rounded
+                    onClick={() => {
+                        setConfirmPrintDialog(true);
+                        setPrintOrder(rowData);
+                    }}></Button>
             );
     }
 
@@ -224,6 +293,13 @@ export default function PrintOrder() {
         setDetailVisible(true);
         setDetail(data);
     }
+
+    const dialogFooter = (
+        <div>
+            <Button label="Không" icon="pi pi-times" onClick={() => setConfirmPrintDialog(false)} className="p-button-text" />
+            <Button label="Có" icon="pi pi-check" onClick={() => confirmPrint()} autoFocus />
+        </div>
+    );
 
     return (
         <div>
@@ -277,6 +353,13 @@ export default function PrintOrder() {
                         )
                     }
                 </div>
+            </Dialog>
+            <Dialog visible={confirmPrintDialog} onHide={() => setConfirmPrintDialog(false)} header="Xác nhận đã in"
+                className='dashboard-body-dialog' breakpoints={{ '1536px': '50vw', '960px': '75vw', '641px': '100vw' }}
+                footer={dialogFooter}>
+                <p>
+                    Xác nhận đã in {printOrder?.documentName}?
+                </p>
             </Dialog>
         </div>
     )

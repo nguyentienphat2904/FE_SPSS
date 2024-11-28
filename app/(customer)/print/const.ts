@@ -15,7 +15,7 @@ export const fileTypes = [
     'text/csv'
 ];
 
-export const baseUrl = 'https://spss.tiendungcorp.com.vn/v1';
+export const baseUrl = 'http://localhost:3010/v1';
 
 export interface FileData {
     id: string;

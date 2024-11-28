@@ -119,7 +119,7 @@ export const PrintOrderData = [
     },
 ]
 
-export const BASE_URL = 'https://spss.tiendungcorp.com.vn/v1';
+export const BASE_URL = 'http://localhost:3010/v1';
 export const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjEyMzQ1Iiwicm9sZSI6IlNQU08iLCJpYXQiOjE3MzEzMjk4MzIsImV4cCI6MTc2Mjg2NTgzMn0.Reitz8hF_-WcZR87REnjULu8m5eSTRgjgytJHPty3Yg'
 
 export interface IPrintOrder {
