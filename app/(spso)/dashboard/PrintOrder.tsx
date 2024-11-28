@@ -21,7 +21,6 @@ import { IPrintOrder, PrintingOrder } from './const'
 
 export default function PrintOrder() {
     const toast = useRef<Toast>(null);
-    const [PrintOrder, setPrintOrder] = useState<IPrintOrder[]>([]);
     const [PrintingOrder, setPrintingOrder] = useState<PrintingOrder[]>([]);
     const [isPrintingOrderLoaded, setIsPrintingOrderLoaded] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
@@ -166,10 +165,14 @@ export default function PrintOrder() {
         switch (status) {
             case 'PENDING':
                 return 'danger';
+            case 'FAILED':
+                return 'danger';
             case 'PAID':
                 return 'success';
             case 'SUCCESS':
                 return 'success';
+            case 'PROCESSING':
+                return 'warning'
             default:
                 return 'warning';
         }

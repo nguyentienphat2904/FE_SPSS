@@ -5,18 +5,13 @@ import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Toast } from 'primereact/toast';
 import { Button } from 'primereact/button';
-import { FileUpload } from 'primereact/fileupload';
-import { Rating } from 'primereact/rating';
-import { Toolbar } from 'primereact/toolbar';
-import { InputTextarea } from 'primereact/inputtextarea';
-import { RadioButton, RadioButtonChangeEvent } from 'primereact/radiobutton';
-import { InputNumber, InputNumberValueChangeEvent } from 'primereact/inputnumber';
 import { Dialog } from 'primereact/dialog';
 import { Dropdown, DropdownChangeEvent } from 'primereact/dropdown';
 import { InputText } from 'primereact/inputtext';
 import { Tag } from 'primereact/tag';
 import { FilterMatchMode, FilterOperator } from 'primereact/api';
-
+import { useSelector } from 'react-redux';
+import { RootState } from '@/redux/store';
 
 import UploadImage from './component/UploadImage';
 
@@ -151,15 +146,9 @@ export default function PrintsPage() {
         setCustomizeLocation(updatedLocations);
     }, [locations]);
 
-    // console.log(customizeLocation);
-    // console.log(printers[0]?.createdAt, locations);
+    const userType = useSelector((state: RootState) => state.auth.userInfo?.type);
+    if (userType !== 'spso') return <div>Không được phép truy cập.</div>
 
-
-
-    // const customizedLocations = locations.map(location => ({
-    //     ...location,
-    //     displayName: `${location.room} - ${location.block} - ${location.branch}`
-    // }));
 
     const formatDate = (value: string | Date) => {
         return new Date(value).toLocaleDateString('en-US', {
