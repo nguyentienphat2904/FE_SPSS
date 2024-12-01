@@ -246,7 +246,7 @@ const HomePage = () => {
                 <DataTable value={PrintingOrder} paginator header={header} rows={10}
                     paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
                     rowsPerPageOptions={[10, 25, 50]} dataKey="id"
-                    filters={filters} filterDisplay="menu" globalFilterFields={['name', 'status']}
+                    filters={filters} filterDisplay="menu" globalFilterFields={['documentName', 'status']}
                     emptyMessage="Không có bản in gần đây." currentPageReportTemplate="Hiển thị {first} tới {last} trên {totalRecords}">
                     <Column
                         field="documentName"
